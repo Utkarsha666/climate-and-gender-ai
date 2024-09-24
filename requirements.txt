@@ -1,0 +1,10 @@
+neo4j
+langchain
+langchain-community
+langchain-experimental
+langchain-google-genai
+langchain-groq
+python-dotenv
+tiktoken
+networkx
+streamlit
