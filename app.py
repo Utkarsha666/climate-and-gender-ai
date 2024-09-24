@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 import seaborn as sns
+import requests
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -21,6 +23,15 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 url = "https://data.humdata.org/dataset/5a1ea18e-9177-4e37-b91f-5631961bdb6c/resource/4539296c-289c-48a2-b0dc-3fc8dcad1b77/download/gii_gender_inequality_index_value.csv"
 gii_data = pd.read_csv(url)
 
+args = {
+  "iso2code": "NP"
+  }
+
+# load digital gender gap
+digital_gender_gap = requests.get('http://digitalgendergaps.org/api/v1/query_specific_country?iso2code=NP', params = args)
+digital_gender_gap = digital_gender_gap.json()
+df_digital_gender_gap = pd.DataFrame(digital_gender_gap['data']['NP']).T
+df_digital_gender_gap.index = pd.to_datetime(df_digital_gender_gap.index, format='%Y%m')
 
 #######################################################################################################################
 
@@ -72,6 +83,28 @@ def plot_time_series(data, string):
     
     
     st.pyplot(plt)
+    
+def plot_model_prediction(df, column_name, title):
+    """
+    Function to plot a line chart using Seaborn for the given column in the DataFrame
+    in a Streamlit app.
+
+    Parameters:
+    - df: DataFrame containing the data
+    - column_name: The column to be plotted
+    - title: The title of the plot
+    """
+    fig, ax = plt.subplots(figsize=(8, 4))
+    
+    # Seaborn lineplot
+    sns.lineplot(data=df, x=df.index, y=column_name, ax=ax)
+    
+    # Set plot title and remove top and right spines
+    ax.set_title(title)
+    ax.spines[['top', 'right']].set_visible(False)
+    
+    # Display the plot in Streamlit
+    st.pyplot(fig)
 
 
 
@@ -79,7 +112,7 @@ def plot_time_series(data, string):
 
 if __name__ == '__main__':
 
-    st.title("Gender Inequality Index")
+    st.title("Intersection of Gender Inequality and Climate Change")
 
     # Filter and plot the time series data for Nepal (Gender Inequality Index)
     nepal_data = gii_data[gii_data["country"] == "Nepal"]
@@ -87,28 +120,28 @@ if __name__ == '__main__':
 
     st.subheader("Gender Inequality Index Time Series (Nepal)")
     plot_time_series(nepal_data_grouped, "Gender Inequality Index")
-    st.title("Relationship Visualizer")
+    st.subheader("Relationship visualizer based on ICIMOD's Report on Gender & Climate change 2021")
 
     # Create a dropdown menu in the sidebar
-    option = st.sidebar.selectbox(
-        'Select a query to visualize relationships:',
+    relation_option = st.sidebar.selectbox(
+        'Select relation to visualize entities:',
         ('Applies-To','Effects', 'CAUSES', 'Effected-By', 'Impact', 'Funds')
     )
 
     driver = GraphDatabase.driver(uri, auth=(user, password))
 
     # Define different Cypher queries based on the dropdown selection
-    if option == 'Effects':
+    if relation_option == 'Effects':
         query = "MATCH p=()-[:AFFECTS]->() RETURN p LIMIT 25;"
-    elif option == 'CAUSES':
+    elif relation_option == 'CAUSES':
         query = "MATCH p=()-[:CAUSES]->() RETURN p LIMIT 25;"
-    elif option == 'Effected-By':
+    elif relation_option == 'Effected-By':
         query = "MATCH p=()-[:AFFECTED_BY]->() RETURN p LIMIT 25;"
-    elif option == 'Impact':
+    elif relation_option == 'Impact':
         query = "MATCH p=()-[:IMPACTS]->() RETURN p LIMIT 25;"
-    elif option == 'Applies-To':
+    elif relation_option == 'Applies-To':
         query = "MATCH p=()-[:APPLIES_TO]->() RETURN p LIMIT 25;"
-    elif option == 'Funds':
+    elif relation_option == 'Funds':
         query = "MATCH p=()-[:FUNDS]->() RETURN p LIMIT 25;"
 
     # Run the selected query
@@ -122,3 +155,32 @@ if __name__ == '__main__':
 
     # Close driver connection
     driver.close()
+
+    st.subheader("Digital Gender Gap")
+
+
+    # Create a dropdown menu in the sidebar
+    digital_gender_gap_option = st.sidebar.selectbox(
+        'Select digital gender gap',
+        ('Internet Online','Internet Offline', 'Internet Both', 'Mobile Online', 'Mobile Offline', 'Mobile Both', 'Mobile GSMA')
+    )
+
+    if digital_gender_gap_option == 'Internet Online':
+        plot_model_prediction(df_digital_gender_gap, 'internet_online_model_prediction', 'Internet Online')
+    elif digital_gender_gap_option == 'Internet Offline':
+        plot_model_prediction(df_digital_gender_gap, 'internet_offline_model_prediction', 'Internet Offline')
+    elif digital_gender_gap_option == 'Internet Both':
+        plot_model_prediction(df_digital_gender_gap, 'internet_online_offline_model_prediction', 'Internet Both')
+    elif digital_gender_gap_option == 'Mobile Online':
+        plot_model_prediction(df_digital_gender_gap, 'mobile_online_model_prediction', 'Mobile Online')
+    elif digital_gender_gap_option == 'Mobile Offline':
+        plot_model_prediction(df_digital_gender_gap, 'mobile_offline_model_prediction', 'Mobile Offline')
+    elif digital_gender_gap_option == 'Mobile Both':
+        plot_model_prediction(df_digital_gender_gap, 'mobile_online_offline_model_prediction', 'Mobile Both')
+    elif digital_gender_gap_option == 'Mobile GSMA':
+        plot_model_prediction(df_digital_gender_gap, 'ground_truth_mobile_gg', 'Mobile GSMA')
+
+
+
+
+
