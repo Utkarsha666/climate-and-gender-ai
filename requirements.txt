@@ -9,3 +9,4 @@ tiktoken
 networkx
 streamlit
 matplotlib
+seaborn
