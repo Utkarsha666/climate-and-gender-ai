@@ -15,9 +15,18 @@ The main objectives of this project are:
 # Screenshot
 ![alt text](image.png)
 
-
 # chatbot feature
 ![alt text](image-2.png)
 
 ![alt text](image-1.png)
+
+![alt text](image-4.png)
+
+
+## Digital Gender Gap and Gender Inequality Index
+![alt text](image-3.png)
+
+
+# License
+MIT License
 

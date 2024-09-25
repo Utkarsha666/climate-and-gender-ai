@@ -151,15 +151,20 @@ def question(user_input):
         model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.1)
 
         template = """
-            Your task is to answer the following based only on the provided context: {context}\n The provieded documents are reports, policies, and publications on Climate Change and Gender Inequality
-            Answer the question: {question} in as much detail as possible, but only using information from the context provided.
-            When answering question:
-            1. Provide precise and accurate information based strictly on the retrieved documents.
-            2. Cite references if possible related to gender and climate relation and propose a solution that promotes equality and sustainable development if possible
-            3. Do not provide information that is not present in the retrieved documents, and avoid making any assumptions.
-            4. If the query is unclear or requires additional context, ask clarifying questions before providing an answer.
-            5. Be neutral while answering to the question
-            6. Do not start with The provided text.
+            Task: Answer the question using only the provided context: {context}.
+
+            Context: The documents consist of reports, policies, and publications related to Climate Change and Gender Inequality.
+
+            Instructions:
+
+                Provide accurate, detailed answers strictly based on the given documents.
+                Cite relevant references on the relationship between gender and climate change. Where possible, propose solutions that foster equality and sustainable development.
+                Do not introduce information beyond the documents or make assumptions.
+                If the query is unclear or lacks sufficient detail, ask for clarification before responding.
+                Maintain a neutral tone in your answer.
+                Avoid starting with phrases like "The provided text..."
+
+            Question: {question}
         """
 
 
@@ -192,7 +197,7 @@ driver = GraphDatabase.driver(uri, auth=(user, password))
 # Create a dropdown menu in the sidebar
 relation_option = st.sidebar.selectbox(
     'Select relation to visualize entities:',
-    ('Impact','Effects', 'CAUSES', 'Effected-By', 'Applies-To', 'Funds')
+    ('Impact','Effects', 'Contributes', 'CAUSES', 'Promotes', 'Effected-By', 'Applies-To', 'Funds', 'Developed', 'Damages', 'Governing', 'Specifies')
 )
 
 # Create a dropdown menu in the sidebar
@@ -201,7 +206,7 @@ digital_gender_gap_option = st.sidebar.selectbox(
     ('Internet Online','Internet Offline', 'Internet Both', 'Mobile Online', 'Mobile Offline', 'Mobile Both', 'Mobile GSMA')
 )
 
-user_input = st.sidebar.text_area("Ask question to Bot: Climate Change, Gender (Reports and Polies Nepal)")
+user_input = st.sidebar.text_area("Ask question to Bot: Climate Change and Gender (Reports, Policies, assesment etc Nepal)")
 submit_button = st.sidebar.button("ASK ME")
 
 # Display the submitted text
@@ -212,24 +217,6 @@ if submit_button:
 #########################################################################################################################
 
 if __name__ == '__main__':
-
-    st.markdown(
-        """
-        <style>
-        /* Ensure the sidebar is always visible on mobile devices */
-        @media (max-width: 768px) {
-            .css-1y4p8pa {  /* Adjusts the sidebar on mobile view */
-                transform: translateX(0%) !important;
-                visibility: visible !important;
-            }
-            .css-1lcbmhc {  /* Adjusts the main content to not overlap with sidebar */
-                margin-left: 250px !important;  /* Adjust this based on sidebar width */
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
     st.title("Gender and Climate Change")
 
     st.subheader("Relationship visualizer based on ICIMOD's Report on Gender & Climate change 2021")
@@ -237,16 +224,43 @@ if __name__ == '__main__':
     # Define different Cypher queries based on the dropdown selection
     if relation_option == 'Effects':
         query = "MATCH p=()-[:AFFECTS]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Effect Relationship<br>Nodes: Entities", unsafe_allow_html=True)
     elif relation_option == 'CAUSES':
         query = "MATCH p=()-[:CAUSES]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Causes Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    elif relation_option == 'Integrates':
+        query = "MATCH p=()-[:INTEGRATES]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Integrates Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    elif relation_option == 'Damages':
+        query = "MATCH p=()-[:DAMAGES]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Damages Relationship<br>Nodes: Entities", unsafe_allow_html=True)
     elif relation_option == 'Effected-By':
         query = "MATCH p=()-[:AFFECTED_BY]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Effected By Relationship<br>Nodes: Entities", unsafe_allow_html=True)
     elif relation_option == 'Impact':
         query = "MATCH p=()-[:IMPACTS]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Impacts Relationship<br>Nodes: Entities", unsafe_allow_html=True)
     elif relation_option == 'Applies-To':
         query = "MATCH p=()-[:APPLIES_TO]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Applies to Relationship<br>Nodes: Entities", unsafe_allow_html=True)
     elif relation_option == 'Funds':
         query = "MATCH p=()-[:FUNDS]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Funds Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    elif relation_option == 'Contributes':
+        query = "MATCH p=()-[:CONTRIBUTES_TO]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Contributes Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    elif relation_option == 'Developed':
+        query = "MATCH p=()-[:DEVELOPED]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Developed Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    elif relation_option == 'Governing':
+        query = "MATCH p=()-[:GOVERNING]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Governing Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    elif relation_option == 'Specifies':
+        query = "MATCH p=()-[:SPECIFIES]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Specifies Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    elif relation_option == 'Promotes':
+        query = "MATCH p=()-[:PROMOTES]->() RETURN p LIMIT 25;"
+        st.markdown("Edges: Promotes Relationship<br>Nodes: Entities", unsafe_allow_html=True)
 
     # Run the selected query
     neo4j_paths = run_cypher_query(query, driver)
