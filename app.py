@@ -7,7 +7,14 @@ from dotenv import load_dotenv
 import pandas as pd
 import seaborn as sns
 import requests
-
+from pymongo import MongoClient
+from langchain.vectorstores import MongoDBAtlasVectorSearch
+from langchain_google_genai import ChatGoogleGenerativeAI
+import google.generativeai as genai
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain.prompts import PromptTemplate
 
 # Load environment variables from .env file
 load_dotenv()
@@ -17,6 +24,7 @@ uri = os.getenv("NEO4J_URI")
 user = os.getenv("NEO4J_USERNAME")
 password = os.getenv("NEO4J_PASSWORD")
 groq_api_key = os.getenv("GROQ_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Load the Gender Inequality Index (GII) data
 # Load the Gender Inequality Index data
@@ -106,11 +114,80 @@ def plot_model_prediction(df, column_name, title):
     # Display the plot in Streamlit
     st.pyplot(fig)
 
+##################################################################################################################
+
+def connect_mongoDB():
+    MONGO_USER = os.getenv("MONGO_USER")
+    MONGO_PASSWORD = os.getenv("MONGO_PASSWORD")
+
+    # MongoDB Atlas connection
+    uri = f'mongodb+srv://{MONGO_USER}:{MONGO_PASSWORD}@cluster0.5sbsz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+    client = MongoClient(uri)
+
+    # Select the database and collection
+    db = client['CCandGender']  
+    collection = db['embeddings']    
+    return collection
+
+def get_vector_retriever(collection):
+    # Define the Atlas Vector Search Index name
+    ATLAS_VECTOR_SEARCH_INDEX_NAME = 'vector_index'
+    embedding_model = GoogleGenerativeAIEmbeddings(model='models/embedding-001')
+
+    # Define your vector search engine using MongoDB Atlas
+    vector_search = MongoDBAtlasVectorSearch.from_documents(
+        documents=[],  # no need to pass documents here if they are already in MongoDB
+        embedding=embedding_model,
+        collection=collection,
+        index_name=ATLAS_VECTOR_SEARCH_INDEX_NAME
+    )
+    retriever = vector_search.as_retriever(search_type='similarity', search_kwargs={'k': 2})
+
+    return retriever
+
+def question(user_input):
+    if user_input: 
+
+        model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.1)
+
+        template = """
+            Your task is to answer the following based only on the provided context: {context}\n The provieded documents are reports, policies, and publications on Climate Change and Gender Inequality
+            Answer the question: {question} in as much detail as possible, but only using information from the context provided.
+            When answering question:
+            1. Provide precise and accurate information based strictly on the retrieved documents.
+            2. Cite references if possible related to gender and climate relation and propose a solution that promotes equality and sustainable development if possible
+            3. Do not provide information that is not present in the retrieved documents, and avoid making any assumptions.
+            4. If the query is unclear or requires additional context, ask clarifying questions before providing an answer.
+            5. Be neutral while answering to the question
+            6. Do not start with The provided text.
+        """
+
+
+        prompt_template = PromptTemplate(
+            input_variables=["context", "question"],
+            template=template
+        )
+
+        database = connect_mongoDB()
+        retriever = get_vector_retriever(database)
+
+        rag_chain = (
+        {
+            "context": retriever,
+            "question": RunnablePassthrough()
+        }
+        | prompt_template
+        | model
+        | StrOutputParser()
+        ) 
+            
+        answer = rag_chain.invoke(user_input)
+        return answer
+
 
 # Set the sidebar title
 st.sidebar.title("Climate and Gender AI")
 driver = GraphDatabase.driver(uri, auth=(user, password))
-###################################################################################################################
 
 # Create a dropdown menu in the sidebar
 relation_option = st.sidebar.selectbox(
@@ -129,7 +206,10 @@ submit_button = st.sidebar.button("ASK ME")
 
 # Display the submitted text
 if submit_button:
-    st.sidebar.write("You submitted: ", user_input)
+    answer = question(user_input)
+    st.sidebar.write(answer)
+
+#########################################################################################################################
 
 if __name__ == '__main__':
 
