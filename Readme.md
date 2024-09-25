@@ -10,10 +10,7 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 The main objectives of this project are:
 - Developing a Knowledge Graph: Create a gender-climate knowledge graph that maps the intricate relationships between climate change impacts, gender disparities, and socio-economic factors across various regions and sectors.
 - Applying Machine Learning: Leverage ML algorithms to analyze patterns and predict gender-specific outcomes from climate change scenarios (e.g., the effect of droughts on female labor force participation).
-Building Tools: Create a dashboard or AI-powered decision-making tool.
+- Building Tools: Create a dashboard or AI-powered decision-making tool.
 
-# Graph Relations
-Based on the Report State of Gender Inequality and Climate Change ICIMOD (2015)
-![climate change](image.png)
-![policy](image-1.png)
-![funds](image-2.png)
+# Screenshot
+![alt text](image.png)

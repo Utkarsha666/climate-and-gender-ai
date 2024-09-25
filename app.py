@@ -107,9 +107,29 @@ def plot_model_prediction(df, column_name, title):
     st.pyplot(fig)
 
 
-
+# Set the sidebar title
+st.sidebar.title("Climate and Gender AI")
 driver = GraphDatabase.driver(uri, auth=(user, password))
 ###################################################################################################################
+
+# Create a dropdown menu in the sidebar
+relation_option = st.sidebar.selectbox(
+    'Select relation to visualize entities:',
+    ('Impact','Effects', 'CAUSES', 'Effected-By', 'Applies-To', 'Funds')
+)
+
+# Create a dropdown menu in the sidebar
+digital_gender_gap_option = st.sidebar.selectbox(
+    'Select digital gender gap',
+    ('Internet Online','Internet Offline', 'Internet Both', 'Mobile Online', 'Mobile Offline', 'Mobile Both', 'Mobile GSMA')
+)
+
+user_input = st.sidebar.text_area("Ask question to Bot: Climate Change, Gender (Reports and Polies Nepal)")
+submit_button = st.sidebar.button("ASK ME")
+
+# Display the submitted text
+if submit_button:
+    st.sidebar.write("You submitted: ", user_input)
 
 if __name__ == '__main__':
 
@@ -130,25 +150,9 @@ if __name__ == '__main__':
         """,
         unsafe_allow_html=True
     )
+    st.title("Gender and Climate Change")
 
-    # Set the sidebar title
-    st.sidebar.title("Climate and Gender AI")
-
-    st.title("Intersection of Gender Inequality and Climate Change")
-
-    # Filter and plot the time series data for Nepal (Gender Inequality Index)
-    nepal_data = gii_data[gii_data["country"] == "Nepal"]
-    nepal_data_grouped = nepal_data.groupby("year")["value"].mean().reset_index()
-
-    st.subheader("Gender Inequality Index Time Series (Nepal)")
-    plot_time_series(nepal_data_grouped, "Gender Inequality Index")
     st.subheader("Relationship visualizer based on ICIMOD's Report on Gender & Climate change 2021")
-
-    # Create a dropdown menu in the sidebar
-    relation_option = st.sidebar.selectbox(
-        'Select relation to visualize entities:',
-        ('Impact','Effects', 'CAUSES', 'Effected-By', 'Applies-To', 'Funds')
-    )
 
     # Define different Cypher queries based on the dropdown selection
     if relation_option == 'Effects':
@@ -173,29 +177,31 @@ if __name__ == '__main__':
     # Plot the graph in the Streamlit app
     plot_graph(G)
 
-    st.subheader("Digital Gender Gap")
+    # Filter and plot the time series data for Nepal (Gender Inequality Index)
+    nepal_data = gii_data[gii_data["country"] == "Nepal"]
+    nepal_data_grouped = nepal_data.groupby("year")["value"].mean().reset_index()
 
-
-    # Create a dropdown menu in the sidebar
-    digital_gender_gap_option = st.sidebar.selectbox(
-        'Select digital gender gap',
-        ('Internet Online','Internet Offline', 'Internet Both', 'Mobile Online', 'Mobile Offline', 'Mobile Both', 'Mobile GSMA')
-    )
-
-    if digital_gender_gap_option == 'Internet Online':
-        plot_model_prediction(df_digital_gender_gap, 'internet_online_model_prediction', 'Internet Online')
-    elif digital_gender_gap_option == 'Internet Offline':
-        plot_model_prediction(df_digital_gender_gap, 'internet_offline_model_prediction', 'Internet Offline')
-    elif digital_gender_gap_option == 'Internet Both':
-        plot_model_prediction(df_digital_gender_gap, 'internet_online_offline_model_prediction', 'Internet Both')
-    elif digital_gender_gap_option == 'Mobile Online':
-        plot_model_prediction(df_digital_gender_gap, 'mobile_online_model_prediction', 'Mobile Online')
-    elif digital_gender_gap_option == 'Mobile Offline':
-        plot_model_prediction(df_digital_gender_gap, 'mobile_offline_model_prediction', 'Mobile Offline')
-    elif digital_gender_gap_option == 'Mobile Both':
-        plot_model_prediction(df_digital_gender_gap, 'mobile_online_offline_model_prediction', 'Mobile Both')
-    elif digital_gender_gap_option == 'Mobile GSMA':
-        plot_model_prediction(df_digital_gender_gap, 'ground_truth_mobile_gg', 'Mobile GSMA')
+    col1, col2 = st.columns([1, 2])  
+    with col1:
+        st.subheader("Gender Inequality Index Time Series (Nepal)")
+        plot_time_series(nepal_data_grouped, "Gender Inequality Index")
+    
+    with col2:
+        st.subheader("Digital Gender Gap")
+        if digital_gender_gap_option == 'Internet Online':
+            plot_model_prediction(df_digital_gender_gap, 'internet_online_model_prediction', 'Internet Online')
+        elif digital_gender_gap_option == 'Internet Offline':
+            plot_model_prediction(df_digital_gender_gap, 'internet_offline_model_prediction', 'Internet Offline')
+        elif digital_gender_gap_option == 'Internet Both':
+            plot_model_prediction(df_digital_gender_gap, 'internet_online_offline_model_prediction', 'Internet Both')
+        elif digital_gender_gap_option == 'Mobile Online':
+            plot_model_prediction(df_digital_gender_gap, 'mobile_online_model_prediction', 'Mobile Online')
+        elif digital_gender_gap_option == 'Mobile Offline':
+            plot_model_prediction(df_digital_gender_gap, 'mobile_offline_model_prediction', 'Mobile Offline')
+        elif digital_gender_gap_option == 'Mobile Both':
+            plot_model_prediction(df_digital_gender_gap, 'mobile_online_offline_model_prediction', 'Mobile Both')
+        elif digital_gender_gap_option == 'Mobile GSMA':
+            plot_model_prediction(df_digital_gender_gap, 'ground_truth_mobile_gg', 'Mobile GSMA')
 
 
 
