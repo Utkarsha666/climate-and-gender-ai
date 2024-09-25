@@ -108,9 +108,31 @@ def plot_model_prediction(df, column_name, title):
 
 
 
+driver = GraphDatabase.driver(uri, auth=(user, password))
 ###################################################################################################################
 
 if __name__ == '__main__':
+
+    st.markdown(
+        """
+        <style>
+        /* Ensure the sidebar is always visible on mobile devices */
+        @media (max-width: 768px) {
+            .css-1y4p8pa {  /* Adjusts the sidebar on mobile view */
+                transform: translateX(0%) !important;
+                visibility: visible !important;
+            }
+            .css-1lcbmhc {  /* Adjusts the main content to not overlap with sidebar */
+                margin-left: 250px !important;  /* Adjust this based on sidebar width */
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Set the sidebar title
+    st.sidebar.title("Climate and Gender AI")
 
     st.title("Intersection of Gender Inequality and Climate Change")
 
@@ -125,10 +147,8 @@ if __name__ == '__main__':
     # Create a dropdown menu in the sidebar
     relation_option = st.sidebar.selectbox(
         'Select relation to visualize entities:',
-        ('Applies-To','Effects', 'CAUSES', 'Effected-By', 'Impact', 'Funds')
+        ('Impact','Effects', 'CAUSES', 'Effected-By', 'Applies-To', 'Funds')
     )
-
-    driver = GraphDatabase.driver(uri, auth=(user, password))
 
     # Define different Cypher queries based on the dropdown selection
     if relation_option == 'Effects':
@@ -152,9 +172,6 @@ if __name__ == '__main__':
 
     # Plot the graph in the Streamlit app
     plot_graph(G)
-
-    # Close driver connection
-    driver.close()
 
     st.subheader("Digital Gender Gap")
 
