@@ -197,7 +197,7 @@ driver = GraphDatabase.driver(uri, auth=(user, password))
 # Create a dropdown menu in the sidebar
 relation_option = st.sidebar.selectbox(
     'Select relation to visualize entities:',
-    ('Impact','Effects', 'Contributes', 'CAUSES', 'Promotes', 'Effected-By', 'Applies-To', 'Funds', 'Developed', 'Damages', 'Governing', 'Specifies')
+    ('Impact','Effects', 'Contributes', 'CAUSES', 'Promotes', 'Effected-By', 'Applies-To', 'Funds', 'Developed', 'Damages', 'Governing', 'Specifies', 'Promotes')
 )
 
 # Create a dropdown menu in the sidebar

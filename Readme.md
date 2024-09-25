@@ -15,9 +15,7 @@ The main objectives of this project are:
 # Screenshot
 ![alt text](image.png)
 
-# chatbot feature
-![alt text](image-2.png)
-
+# chat feature
 ![alt text](image-1.png)
 
 ![alt text](image-4.png)
