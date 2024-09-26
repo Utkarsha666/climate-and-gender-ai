@@ -18,11 +18,19 @@ The main objectives of this project are:
 # chat feature
 ![alt text](image-1.png)
 
+![alt text](image-2.png)
+
 ![alt text](image-4.png)
+
+# Explain Graph Features
+user can click on Explain Graph, which will explain the relation of graph in natural language
+![alt text](image-5.png)
+![alt text](image-6.png)
 
 
 ## Digital Gender Gap and Gender Inequality Index
 ![alt text](image-3.png)
+
 
 
 # License

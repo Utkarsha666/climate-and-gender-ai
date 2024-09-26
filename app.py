@@ -15,14 +15,18 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.prompts import PromptTemplate
+from langchain.chains import GraphCypherQAChain
+from langchain_groq import ChatGroq
+from langchain_community.graphs import Neo4jGraph
+
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Access the variables
-uri = os.getenv("NEO4J_URI")
-user = os.getenv("NEO4J_USERNAME")
-password = os.getenv("NEO4J_PASSWORD")
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 groq_api_key = os.getenv("GROQ_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
@@ -40,6 +44,8 @@ digital_gender_gap = requests.get('http://digitalgendergaps.org/api/v1/query_spe
 digital_gender_gap = digital_gender_gap.json()
 df_digital_gender_gap = pd.DataFrame(digital_gender_gap['data']['NP']).T
 df_digital_gender_gap.index = pd.to_datetime(df_digital_gender_gap.index, format='%Y%m')
+
+llm_groq = ChatGroq(groq_api_key=groq_api_key,model_name="Gemma-7b-It")
 
 #######################################################################################################################
 
@@ -192,7 +198,7 @@ def question(user_input):
 
 # Set the sidebar title
 st.sidebar.title("Climate and Gender AI")
-driver = GraphDatabase.driver(uri, auth=(user, password))
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
 # Create a dropdown menu in the sidebar
 relation_option = st.sidebar.selectbox(
@@ -270,6 +276,29 @@ if __name__ == '__main__':
 
     # Plot the graph in the Streamlit app
     plot_graph(G)
+
+    # Button to explain the graph in natural language
+    if st.sidebar.button("Explain Graph"):
+        entities_info = []
+        for path in neo4j_paths:
+            for rel in path.relationships:
+                start_node = rel.start_node
+                end_node = rel.end_node
+                relationship = rel
+                entities_info.append(f"Entity: {start_node['id']} Relationship: {relationship.type} Entity: {end_node['id']}")
+
+        entities_info_str = "\n".join(entities_info)
+        prompt = f"Explain the relationships between the following entities in Neo4j:\n{entities_info_str}"
+
+        # Define the messages for the chat
+        messages = [
+            {"role": "system", "content": "You are a expert assistant whose job is to find relation between entities"},
+            {"role": "user", "content": prompt}
+        ]
+
+        response = llm_groq.invoke(messages)
+        st.sidebar.write(response.content)
+    ############################################################################################################################
 
     # Filter and plot the time series data for Nepal (Gender Inequality Index)
     nepal_data = gii_data[gii_data["country"] == "Nepal"]
