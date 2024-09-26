@@ -25,7 +25,6 @@ The main objectives of this project are:
 # Explain Graph Features
 user can click on Explain Graph, which will explain the relation of graph in natural language
 ![alt text](image-5.png)
-![alt text](image-6.png)
 
 
 ## Digital Gender Gap and Gender Inequality Index
