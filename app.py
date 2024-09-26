@@ -288,7 +288,7 @@ if __name__ == '__main__':
                 entities_info.append(f"Entity: {start_node['id']} Relationship: {relationship.type} Entity: {end_node['id']}")
 
         entities_info_str = "\n".join(entities_info)
-        prompt = f"Explain the relationships between the following entities in Neo4j:\n{entities_info_str}"
+        prompt = f"Explain the relationships between the following entities in Neo4j:\n{entities_info_str}\n in 20 words for each realtion"
 
         # Define the messages for the chat
         messages = [
