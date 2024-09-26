@@ -13,7 +13,7 @@ The main objectives of this project are:
 - Building Tools: Create a dashboard or AI-powered decision-making tool.
 
 # Screenshot
-![alt text](image.png)
+![alt text](image-1.png)
 
 # chat feature
 ![alt text](image-1.png)

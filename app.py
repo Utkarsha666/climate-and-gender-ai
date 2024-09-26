@@ -164,7 +164,7 @@ def question(user_input):
             Instructions:
 
                 Provide accurate, detailed answers strictly based on the given documents.
-                Cite relevant references on the relationship between gender and climate change. Where possible, propose solutions that foster equality and sustainable development.
+                Cite relevant references on the relationship between gender and climate change.
                 Do not introduce information beyond the documents or make assumptions.
                 If the query is unclear or lacks sufficient detail, ask for clarification before responding.
                 Maintain a neutral tone in your answer.
