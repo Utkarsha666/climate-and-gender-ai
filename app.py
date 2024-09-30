@@ -18,6 +18,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import GraphCypherQAChain
 from langchain_groq import ChatGroq
 from langchain_community.graphs import Neo4jGraph
+from prophet import Prophet
 
 
 # Load environment variables from .env file
@@ -29,6 +30,9 @@ NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 groq_api_key = os.getenv("GROQ_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+
+nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20240101&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
 
 # Load the Gender Inequality Index (GII) data
 # Load the Gender Inequality Index data
@@ -46,8 +50,80 @@ df_digital_gender_gap = pd.DataFrame(digital_gender_gap['data']['NP']).T
 df_digital_gender_gap.index = pd.to_datetime(df_digital_gender_gap.index, format='%Y%m')
 
 llm_groq = ChatGroq(groq_api_key=groq_api_key,model_name="Gemma-7b-It")
-
 #######################################################################################################################
+
+def get_climate_data(nasa_url):
+
+    response = requests.get(nasa_url)
+
+    if response.status_code == 200:
+        data = response.json()
+        parameters = data['properties']['parameter']
+        dates = list(parameters['PRECTOTCORR'].keys())
+
+        precipitation = [parameters['PRECTOTCORR'][date] for date in dates]
+        temperature = [parameters['T2M'][date] for date in dates]
+        
+        climate_change_df = pd.DataFrame({
+            'Date': dates,
+            'Precipitation': precipitation,
+            'Temperature': temperature
+        })
+
+        return climate_change_df
+
+def forecast_temperature_and_precipitation(df):
+
+    df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
+
+    precipitation_df = df[['Date', 'Precipitation']].rename(columns={'Date': 'ds', 'Precipitation': 'y'})
+    precipitation_model = Prophet()
+    precipitation_model.fit(precipitation_df)
+
+    # forecasting
+    future_precipitation = precipitation_model.make_future_dataframe(periods=365)
+    forecast_precipitation = precipitation_model.predict(future_precipitation)
+
+    temperature_df = df[['Date', 'Temperature']].rename(columns={'Date': 'ds', 'Temperature': 'y'})
+
+    #model for Temperature
+    temperature_model = Prophet()
+    temperature_model.fit(temperature_df)
+
+    # forecasting
+    future_temperature = temperature_model.make_future_dataframe(periods=365)
+    forecast_temperature = temperature_model.predict(future_temperature)
+
+    # Plot for Precipitation Forecast
+    fig1, ax1 = plt.subplots(figsize=(10, 6))
+    ax1.plot(precipitation_df['ds'], precipitation_df['y'], label='Observed Precipitation', color='blue')
+    ax1.plot(forecast_precipitation['ds'], forecast_precipitation['yhat'], label='Forecasted Precipitation', color='orange')
+    ax1.fill_between(forecast_precipitation['ds'], 
+                     forecast_precipitation['yhat_lower'], 
+                     forecast_precipitation['yhat_upper'], 
+                     color='orange', alpha=0.2, label='Confidence Interval')
+    ax1.set_title('Precipitation Forecast')
+    ax1.set_xlabel('Date')
+    ax1.set_ylabel('Precipitation')
+    ax1.legend()
+    ax1.grid(True)
+
+    # Plot for Temperature Forecast
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    ax2.plot(temperature_df['ds'], temperature_df['y'], label='Observed Temperature', color='blue')
+    ax2.plot(forecast_temperature['ds'], forecast_temperature['yhat'], label='Forecasted Temperature', color='red')
+    ax2.fill_between(forecast_temperature['ds'], 
+                     forecast_temperature['yhat_lower'], 
+                     forecast_temperature['yhat_upper'], 
+                     color='red', alpha=0.2, label='Confidence Interval')
+    ax2.set_title('Temperature Forecast')
+    ax2.set_xlabel('Date')
+    ax2.set_ylabel('Temperature')
+    ax2.legend()
+    ax2.grid(True)
+
+    return fig1, fig2
+
 
 def run_cypher_query(query, driver):
     with driver.session() as session:
@@ -212,6 +288,7 @@ digital_gender_gap_option = st.sidebar.selectbox(
     ('Internet Online','Internet Offline', 'Internet Both', 'Mobile Online', 'Mobile Offline', 'Mobile Both', 'Mobile GSMA')
 )
 
+climate_change_df = get_climate_data(nasa_url)
 user_input = st.sidebar.text_area("Ask question to Bot: Climate Change and Gender (Reports, Policies, assesment etc Nepal)")
 submit_button = st.sidebar.button("ASK ME")
 
@@ -299,6 +376,17 @@ if __name__ == '__main__':
         response = llm_groq.invoke(messages)
         st.sidebar.write(response.content)
     ############################################################################################################################
+    fig_precipitation, fig_temperature = forecast_temperature_and_precipitation(climate_change_df)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.write("Precipitation Forecast")
+        st.pyplot(fig_precipitation)
+
+    with col2:
+        st.write("Temperature Forecast")
+        st.pyplot(fig_temperature)
+
 
     # Filter and plot the time series data for Nepal (Gender Inequality Index)
     nepal_data = gii_data[gii_data["country"] == "Nepal"]
