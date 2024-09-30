@@ -27,10 +27,7 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 user can click on Explain Graph, which will explain the relation of graph in natural language
 ![alt text](image-5.png)
 
-# Time series forecast
-![alt text](image-4.png)
-
-## Digital Gender Gap and Gender Inequality Index
+# Gender Gap and Forecast
 ![alt text](image-3.png)
 
 
