@@ -35,7 +35,6 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20240928&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
 
 # Load the Gender Inequality Index (GII) data
-# Load the Gender Inequality Index data
 url = "https://data.humdata.org/dataset/5a1ea18e-9177-4e37-b91f-5631961bdb6c/resource/4539296c-289c-48a2-b0dc-3fc8dcad1b77/download/gii_gender_inequality_index_value.csv"
 gii_data = pd.read_csv(url)
 
@@ -394,11 +393,11 @@ if __name__ == '__main__':
 
     col1, col2 = st.columns([1, 2])  
     with col1:
-        st.subheader("Gender Inequality Index Time Series (Nepal)")
+        st.write("Gender Inequality Index Time Series (Nepal)")
         plot_time_series(nepal_data_grouped, "Gender Inequality Index")
     
     with col2:
-        st.subheader("Digital Gender Gap")
+        st.write("Digital Gender Gap")
         if digital_gender_gap_option == 'Internet Online':
             plot_model_prediction(df_digital_gender_gap, 'internet_online_model_prediction', 'Internet Online')
         elif digital_gender_gap_option == 'Internet Offline':
