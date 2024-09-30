@@ -32,7 +32,7 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 
-nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20240101&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
+nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20240928&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
 
 # Load the Gender Inequality Index (GII) data
 # Load the Gender Inequality Index data
