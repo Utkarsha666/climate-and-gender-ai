@@ -30,10 +30,16 @@ user can click on Explain Graph, which will explain the relation of graph in nat
 # Gender Gap and Forecast
 ![alt text](image-3.png)
 
+# Methodology
+- Data Collection
+    - Gender Inequality Data: Data on gender gaps in education, health, employment, and political participation etc will be collected from various sources. 
+- Climate Change Data: Climate data from sources such as https://power.larc.nasa.gov   
+- Policy Documents, Reports, Journals: Relevant reports, research papers and documents that highlight the gendered impacts of climate change.
 
 
 # License
 MIT License
+contact: utkarsha.khanal@gmail.com
 
 # Python
 - Python 3.11.6 
