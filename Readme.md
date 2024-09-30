@@ -9,11 +9,11 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 # Objectives
 - Policy Effectiveness: Evaluate the effectiveness of policies aimed at mitigating climate change and promoting gender equality.
 
-- Climate-Resilient Infrastructure Development: Based on the trends of the features, infrastructure improvements (e.g., flood-resistant housing, drought-resistant agriculture) could focus on reducing the disproportionate burden on women by improving access to critical resources.
+- Climate-Resilient Infrastructure Development: Based on the trends of the features, infrastructure improvements (e.g., flood-resistant housing, drought-resistant agriculture) could focus on reducing the disproportionate burden by improving access to critical resources.
 
-- Resource Allocation and Disaster Relief: Understanding the local climate dynamics (temperature, precipitation, wind) helps allocate resources to vulnerable populations, with specific attention to the needs of women and marginalized communities (e.g., ensuring gender-sensitive distribution of aid post-disaster).
+- Resource Allocation and Disaster Relief: Understanding the local climate dynamics (temperature, precipitation, wind) helps allocate resources to vulnerable populations, with specific attention to the needs of marginalized communities (e.g. distribution of aid post-disaster).
 
-- Risk Assessment and Early Warning Systems: These climate features can be used to develop predictive models that highlight areas at higher risk for disasters such as floods, droughts, and heatwaves. Policy measures can be directed to these regions to ensure gender-sensitive disaster preparedness plans.
+- Risk Assessment and Early Warning Systems: These climate features can be used to develop predictive models that highlight areas at higher risk for disasters such as floods, droughts, and heatwaves. Policy measures can be directed to these regions to ensure disaster preparedness plans.
 
 
 # Screenshot
