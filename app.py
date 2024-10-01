@@ -175,10 +175,10 @@ def forecast_gii(nepal_data):
         'y': nepal_data.values  
     })
     gii_model.fit(nepal_data_prophet)
-    future = gii_model.make_future_dataframe(periods=20, freq="AS")  
+    future = gii_model.make_future_dataframe(periods=15, freq="AS")  
     future['ds'] = pd.to_datetime(future['ds'].dt.year, format='%Y') 
     forecast = gii_model.predict(future)
-    plt.figure(figsize=(14, 7))
+    plt.figure(figsize=(12, 6))
     plt.plot(nepal_data.index, nepal_data.values, label="Actual")  
     plt.plot(forecast["ds"].dt.year, forecast["yhat"], label="Forecast")  
     plt.fill_between(
@@ -186,7 +186,7 @@ def forecast_gii(nepal_data):
     )  
     plt.xlabel("Year")
     plt.ylabel("Gender Inequality Index")
-    plt.title("Gender Inequality Index of Nepal (Forecast for Next 20 Years)")
+    plt.title("Gender Inequality Index of Nepal Forecast")
     plt.legend()
     st.pyplot(plt)
     
@@ -420,7 +420,7 @@ if __name__ == '__main__':
 
     col1, col2 = st.columns([1, 1])  
     with col1:
-        st.write("Gender Inequality Index Time Series (Nepal)")
+        st.write("Gender Inequality Index Forecast Nepal")
         forecast_gii(nepal_data_grouped)
     
     with col2:
