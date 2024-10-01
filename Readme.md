@@ -24,7 +24,6 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 ![alt text](image-1.png)
 
 # chat feature
-![alt text](image-2.png)
 
 
 # Explain Graph Features

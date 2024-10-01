@@ -22,6 +22,7 @@ from langchain_community.graphs import Neo4jGraph
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
+from prophet import Prophet
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,8 +38,8 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20240928&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
 
 # Load the Gender Inequality Index (GII) data
-url = "https://data.humdata.org/dataset/5a1ea18e-9177-4e37-b91f-5631961bdb6c/resource/4539296c-289c-48a2-b0dc-3fc8dcad1b77/download/gii_gender_inequality_index_value.csv"
-gii_data = pd.read_csv(url)
+gii_url = "https://data.humdata.org/dataset/5a1ea18e-9177-4e37-b91f-5631961bdb6c/resource/4539296c-289c-48a2-b0dc-3fc8dcad1b77/download/gii_gender_inequality_index_value.csv"
+gii_model = Prophet()
 
 args = {
   "iso2code": "NP"
@@ -52,6 +53,10 @@ df_digital_gender_gap.index = pd.to_datetime(df_digital_gender_gap.index, format
 
 llm_groq = ChatGroq(groq_api_key=groq_api_key,model_name="Gemma-7b-It")
 #######################################################################################################################
+
+def load_and_prepare_gii(gii_url):
+    gii_data = pd.read_csv(gii_url)
+    return gii_data
 
 def get_climate_data(nasa_url):
 
@@ -74,7 +79,7 @@ def get_climate_data(nasa_url):
         return climate_change_df
 
 def forecast_temperature_and_precipitation(df):
-    # Convert 'Date' to datetime
+    
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date', inplace=True)
 
@@ -100,7 +105,7 @@ def forecast_temperature_and_precipitation(df):
     model_precip = xgb.XGBRegressor()
     model_precip.load_model('models/model_precip.json')
 
-    # Forecast for the next 180 days
+    # Forecast for the next 6 months
     future_dates = pd.date_range(start=df.index[-1], periods=180, freq='D')
     future_df = pd.DataFrame(index=future_dates)
     future_X = create_features(future_df)
@@ -117,7 +122,7 @@ def forecast_temperature_and_precipitation(df):
     forecast_df.set_index('Date', inplace=True)
 
     # Set the Seaborn theme
-    sns.set_theme(style="whitegrid")
+    sns.set_theme(style="dark")
 
     # Plot the forecast
     fig, ax = plt.subplots(figsize=(14, 7))
@@ -132,7 +137,7 @@ def forecast_temperature_and_precipitation(df):
 
     ax.set_xlabel('Date')
     ax.set_ylabel('Values')
-    ax.set_title('Temperature and Precipitation Forecast for 6 Months using XGBoost')
+    ax.set_title('Temperature and Precipitation Forecast for 6 Months')
     ax.legend()
     ax.grid(True)
 
@@ -161,31 +166,28 @@ def plot_graph(G):
     st.pyplot(plt)  
 
 
-def plot_time_series(data, string):
-    # Set a more modern style using seaborn
-    sns.set(style="whitegrid")
-    
-    # Adjust the figure size to make it smaller (e.g., 6x4 inches)
-    plt.figure(figsize=(6, 3))  
-    
-    # Plot with improved aesthetics
-    plt.plot(data["year"], data["value"], marker='o', linestyle='-', color='royalblue', linewidth=2, markersize=6)
-    
-    # Adding labels for each data point
-    for i, row in data.iterrows():
-        plt.text(row["year"], row["value"], f'{row["value"]:.2f}', color="black", ha="right", fontsize=8)
-    
-    # Add title and customize font size
-    plt.title(string, fontsize=12, fontweight='bold')
-    
-    # Adjust the limits for better visualization
-    plt.ylim(data["value"].min() - 0.02, data["value"].max() + 0.02)
-    plt.xlim(data["year"].min() - 1, data["year"].max() + 1)
-    
-   
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray')
-    
-    
+def forecast_gii(nepal_data):
+    nepal_data = nepal_data[nepal_data["country"] == "Nepal"]
+    nepal_data = nepal_data.groupby("year")["value"].mean()
+
+    nepal_data_prophet = pd.DataFrame({
+        'ds': pd.to_datetime(nepal_data.index, format='%Y'),  
+        'y': nepal_data.values  
+    })
+    gii_model.fit(nepal_data_prophet)
+    future = gii_model.make_future_dataframe(periods=20, freq="AS")  
+    future['ds'] = pd.to_datetime(future['ds'].dt.year, format='%Y') 
+    forecast = gii_model.predict(future)
+    plt.figure(figsize=(14, 7))
+    plt.plot(nepal_data.index, nepal_data.values, label="Actual")  
+    plt.plot(forecast["ds"].dt.year, forecast["yhat"], label="Forecast")  
+    plt.fill_between(
+        forecast["ds"].dt.year, forecast["yhat_lower"], forecast["yhat_upper"], alpha=0.2, label="Confidence Interval"
+    )  
+    plt.xlabel("Year")
+    plt.ylabel("Gender Inequality Index")
+    plt.title("Gender Inequality Index of Nepal (Forecast for Next 20 Years)")
+    plt.legend()
     st.pyplot(plt)
     
 def plot_model_prediction(df, column_name, title):
@@ -284,7 +286,12 @@ def question(user_input):
             
         answer = rag_chain.invoke(user_input)
         return answer
+    
+##################################################################################################################################
+##################################################################################################################################
+##################################################################################################################################
 
+nepal_data_grouped = load_and_prepare_gii(gii_url)
 
 # Set the sidebar title
 st.sidebar.title("Climate and Gender AI")
@@ -411,15 +418,10 @@ if __name__ == '__main__':
     ############################################################################################################################
     forecast_temperature_and_precipitation(climate_change_df)
 
-
-    # Filter and plot the time series data for Nepal (Gender Inequality Index)
-    nepal_data = gii_data[gii_data["country"] == "Nepal"]
-    nepal_data_grouped = nepal_data.groupby("year")["value"].mean().reset_index()
-
-    col1, col2 = st.columns([1, 2])  
+    col1, col2 = st.columns([1, 1])  
     with col1:
         st.write("Gender Inequality Index Time Series (Nepal)")
-        plot_time_series(nepal_data_grouped, "Gender Inequality Index")
+        forecast_gii(nepal_data_grouped)
     
     with col2:
         st.write("Digital Gender Gap")
