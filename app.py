@@ -2,6 +2,7 @@ import streamlit as st
 import networkx as nx
 import matplotlib.pyplot as plt
 from neo4j import GraphDatabase
+import numpy as np
 import os
 from dotenv import load_dotenv
 import pandas as pd
@@ -18,8 +19,9 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import GraphCypherQAChain
 from langchain_groq import ChatGroq
 from langchain_community.graphs import Neo4jGraph
-from prophet import Prophet
-
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 
 # Load environment variables from .env file
 load_dotenv()
@@ -72,56 +74,82 @@ def get_climate_data(nasa_url):
         return climate_change_df
 
 def forecast_temperature_and_precipitation(df):
+    # Convert 'Date' to datetime
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
 
-    df['Date'] = pd.to_datetime(df['Date'], format='%Y%m%d')
+    # Prepare the data for XGBoost
+    def create_features(df, label=None):
+        df['month'] = df.index.month
+        df['dayofyear'] = df.index.dayofyear
+        df['dayofmonth'] = df.index.day
+        df['dayofweek'] = df.index.dayofweek
+        X = df[['month', 'dayofyear', 'dayofmonth', 'dayofweek']]
+        if label:
+            y = df[label]
+            return X, y
+        return X
 
-    precipitation_df = df[['Date', 'Precipitation']].rename(columns={'Date': 'ds', 'Precipitation': 'y'})
-    precipitation_model = Prophet()
-    precipitation_model.fit(precipitation_df)
+    X, y_temp = create_features(df, label='Temperature')
+    _, y_precip = create_features(df, label='Precipitation')
 
-    # forecasting
-    future_precipitation = precipitation_model.make_future_dataframe(periods=365)
-    forecast_precipitation = precipitation_model.predict(future_precipitation)
+    # Split the data into training and testing sets
+    X_train, X_test, y_train_temp, y_test_temp = train_test_split(X, y_temp, test_size=0.2, shuffle=False)
+    _, _, y_train_precip, y_test_precip = train_test_split(X, y_precip, test_size=0.2, shuffle=False)
 
-    temperature_df = df[['Date', 'Temperature']].rename(columns={'Date': 'ds', 'Temperature': 'y'})
+    # Train the XGBoost model for temperature
+    model_temp = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=1000)
+    model_temp.fit(X_train, y_train_temp)
 
-    #model for Temperature
-    temperature_model = Prophet()
-    temperature_model.fit(temperature_df)
+    # Train the XGBoost model for precipitation
+    model_precip = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=1000)
+    model_precip.fit(X_train, y_train_precip)
 
-    # forecasting
-    future_temperature = temperature_model.make_future_dataframe(periods=365)
-    forecast_temperature = temperature_model.predict(future_temperature)
+    # Make predictions
+    y_pred_temp = model_temp.predict(X_test)
+    y_pred_precip = model_precip.predict(X_test)
 
-    # Plot for Precipitation Forecast
-    fig1, ax1 = plt.subplots(figsize=(10, 6))
-    ax1.plot(precipitation_df['ds'], precipitation_df['y'], label='Observed Precipitation', color='blue')
-    ax1.plot(forecast_precipitation['ds'], forecast_precipitation['yhat'], label='Forecasted Precipitation', color='orange')
-    ax1.fill_between(forecast_precipitation['ds'], 
-                     forecast_precipitation['yhat_lower'], 
-                     forecast_precipitation['yhat_upper'], 
-                     color='orange', alpha=0.2, label='Confidence Interval')
-    ax1.set_title('Precipitation Forecast')
-    ax1.set_xlabel('Date')
-    ax1.set_ylabel('Precipitation')
-    ax1.legend()
-    ax1.grid(True)
+    # Calculate RMSE
+    rmse_temp = np.sqrt(mean_squared_error(y_test_temp, y_pred_temp))
+    rmse_precip = np.sqrt(mean_squared_error(y_test_precip, y_pred_precip))
 
-    # Plot for Temperature Forecast
-    fig2, ax2 = plt.subplots(figsize=(10, 6))
-    ax2.plot(temperature_df['ds'], temperature_df['y'], label='Observed Temperature', color='blue')
-    ax2.plot(forecast_temperature['ds'], forecast_temperature['yhat'], label='Forecasted Temperature', color='red')
-    ax2.fill_between(forecast_temperature['ds'], 
-                     forecast_temperature['yhat_lower'], 
-                     forecast_temperature['yhat_upper'], 
-                     color='red', alpha=0.2, label='Confidence Interval')
-    ax2.set_title('Temperature Forecast')
-    ax2.set_xlabel('Date')
-    ax2.set_ylabel('Temperature')
-    ax2.legend()
-    ax2.grid(True)
+    # Forecast for the next 180 days
+    future_dates = pd.date_range(start=df.index[-1], periods=180, freq='D')
+    future_df = pd.DataFrame(index=future_dates)
+    future_X = create_features(future_df)
 
-    return fig1, fig2
+    future_temp = model_temp.predict(future_X)
+    future_precip = model_precip.predict(future_X)
+
+    # Create a DataFrame for the forecast
+    forecast_df = pd.DataFrame({
+        'Date': future_dates,
+        'Forecasted_Temperature': future_temp,
+        'Forecasted_Precipitation': future_precip
+    })
+    forecast_df.set_index('Date', inplace=True)
+
+    # Set the Seaborn theme
+    sns.set_theme(style="whitegrid")
+
+    # Plot the forecast
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    # Plot the actual data
+    sns.lineplot(data=df, x=df.index, y='Temperature', label='Actual Temperature', ax=ax)
+    sns.lineplot(data=df, x=df.index, y='Precipitation', label='Actual Precipitation', ax=ax)
+
+    # Plot the forecasted data
+    sns.lineplot(data=forecast_df, x=forecast_df.index, y='Forecasted_Temperature', label='Forecasted Temperature', linestyle='--', ax=ax)
+    sns.lineplot(data=forecast_df, x=forecast_df.index, y='Forecasted_Precipitation', label='Forecasted Precipitation', linestyle='--', ax=ax)
+
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Values')
+    ax.set_title('Temperature and Precipitation Forecast for 6 Months')
+    ax.legend()
+    ax.grid(True)
+
+    st.pyplot(fig)
 
 
 def run_cypher_query(query, driver):
@@ -394,16 +422,7 @@ if __name__ == '__main__':
         response = llm_groq.invoke(messages)
         st.sidebar.write(response.content)
     ############################################################################################################################
-    fig_precipitation, fig_temperature = forecast_temperature_and_precipitation(climate_change_df)
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.write("Precipitation Forecast")
-        st.pyplot(fig_precipitation)
-
-    with col2:
-        st.write("Temperature Forecast")
-        st.pyplot(fig_temperature)
+    forecast_temperature_and_precipitation(climate_change_df)
 
 
     # Filter and plot the time series data for Nepal (Gender Inequality Index)
