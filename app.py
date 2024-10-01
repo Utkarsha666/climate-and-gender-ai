@@ -93,25 +93,12 @@ def forecast_temperature_and_precipitation(df):
     X, y_temp = create_features(df, label='Temperature')
     _, y_precip = create_features(df, label='Precipitation')
 
-    # Split the data into training and testing sets
-    X_train, X_test, y_train_temp, y_test_temp = train_test_split(X, y_temp, test_size=0.2, shuffle=False)
-    _, _, y_train_precip, y_test_precip = train_test_split(X, y_precip, test_size=0.2, shuffle=False)
+    # Load the saved models
+    model_temp = xgb.XGBRegressor()
+    model_temp.load_model('models/model_temp.json')
 
-    # Train the XGBoost model for temperature
-    model_temp = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=1000)
-    model_temp.fit(X_train, y_train_temp)
-
-    # Train the XGBoost model for precipitation
-    model_precip = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=1000)
-    model_precip.fit(X_train, y_train_precip)
-
-    # Make predictions
-    y_pred_temp = model_temp.predict(X_test)
-    y_pred_precip = model_precip.predict(X_test)
-
-    # Calculate RMSE
-    rmse_temp = np.sqrt(mean_squared_error(y_test_temp, y_pred_temp))
-    rmse_precip = np.sqrt(mean_squared_error(y_test_precip, y_pred_precip))
+    model_precip = xgb.XGBRegressor()
+    model_precip.load_model('models/model_precip.json')
 
     # Forecast for the next 180 days
     future_dates = pd.date_range(start=df.index[-1], periods=180, freq='D')
@@ -133,7 +120,7 @@ def forecast_temperature_and_precipitation(df):
     sns.set_theme(style="whitegrid")
 
     # Plot the forecast
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(14, 7))
 
     # Plot the actual data
     sns.lineplot(data=df, x=df.index, y='Temperature', label='Actual Temperature', ax=ax)
@@ -145,7 +132,7 @@ def forecast_temperature_and_precipitation(df):
 
     ax.set_xlabel('Date')
     ax.set_ylabel('Values')
-    ax.set_title('Temperature and Precipitation Forecast for 6 Months')
+    ax.set_title('Temperature and Precipitation Forecast for 6 Months using XGBoost')
     ax.legend()
     ax.grid(True)
 
