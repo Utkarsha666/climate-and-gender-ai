@@ -29,7 +29,7 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 
 # Explain Graph Features
 user can click on Explain Graph, which will explain the relation of graph in natural language
-![alt text](image-5.png)
+![alt text](image-4.png)
 
 # Gender Gap and Forecast
 ![alt text](image-3.png)
