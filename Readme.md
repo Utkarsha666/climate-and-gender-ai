@@ -7,13 +7,17 @@ Addressing this issue is a key focus of the United Nations Sustainable Developme
 This project proposes a data-driven approach using a combination of Knowledge Graphs, Large Language Models (LLMs), and Traditional Machine Learning techniques. This hybrid approach will allow us to model the relationship between climate change and gender inequality by leveraging structured and unstructured data sources, including reports, publications, and climate datasets.
 
 # Objectives
+
 - Policy Effectiveness: Evaluate the effectiveness of policies aimed at mitigating climate change and promoting gender equality.
+
+- Report Generation and Policy Recommendations: Utilize AI agents to analyze real-time climate data from NASA and gender-related datasets. These agents will generate comprehensive reports and actionable policy recommendations. By synthesizing this data, the AI can provide insights into the intersection of climate change and gender inequality, helping policymakers create targeted interventions.
 
 - Climate-Resilient Infrastructure Development: Based on the trends of the features, infrastructure improvements (e.g., flood-resistant housing, drought-resistant agriculture) could focus on reducing the disproportionate burden by improving access to critical resources.
 
 - Resource Allocation and Disaster Relief: Understanding the local climate dynamics (temperature, precipitation, wind) helps allocate resources to vulnerable populations, with specific attention to the needs of marginalized communities (e.g. distribution of aid post-disaster).
 
 - Risk Assessment and Early Warning Systems: These climate features can be used to develop predictive models that highlight areas at higher risk for disasters such as floods, droughts, and heatwaves. Policy measures can be directed to these regions to ensure disaster preparedness plans.
+
 
 
 # Screenshot
@@ -35,6 +39,10 @@ user can click on Explain Graph, which will explain the relation of graph in nat
     - Gender Inequality Data: Data on gender gaps in education, health, employment, and political participation etc will be collected from various sources. 
 - Climate Change Data: Climate data from sources such as https://power.larc.nasa.gov   
 - Policy Documents, Reports, Journals: Relevant reports, research papers and documents that highlight the gendered impacts of climate change.
+
+# Ethical Considerations
+- Bias and Fairness: Ensure that machine learning models are not biased against marginalized gender groups. 
+- Data Privacy: Safeguard the privacy of individuals and communities when collecting and processing gender-disaggregated data.
 
 
 # License

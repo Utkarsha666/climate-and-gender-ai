@@ -222,14 +222,14 @@ def get_vector_retriever(collection):
         collection=collection,
         index_name=ATLAS_VECTOR_SEARCH_INDEX_NAME
     )
-    retriever = vector_search.as_retriever(search_type='similarity', search_kwargs={'k': 2})
+    retriever = vector_search.as_retriever(search_type='similarity', search_kwargs={'k': 3})
 
     return retriever
 
 def question(user_input):
     if user_input: 
 
-        model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.1)
+        model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.2)
 
         template = """
             Task: Answer the question using only the provided context: {context}.
@@ -301,48 +301,67 @@ if submit_button:
 if __name__ == '__main__':
     st.title("Gender and Climate Change")
 
-    st.subheader("Relationship visualizer based on ICIMOD's Report on Gender & Climate change 2021")
+    st.subheader("Relationship visualizer")
+    relation_queries = {
+        'Effects': {
+            'query': "MATCH p=()-[:AFFECTS]->() RETURN p LIMIT 25;",
+            'description': "Edges: Effect Relationship<br>Nodes: Entities"
+        },
+        'CAUSES': {
+            'query': "MATCH p=()-[:CAUSES]->() RETURN p LIMIT 25;",
+            'description': "Edges: Causes Relationship<br>Nodes: Entities"
+        },
+        'Integrates': {
+            'query': "MATCH p=()-[:INTEGRATES]->() RETURN p LIMIT 25;",
+            'description': "Edges: Integrates Relationship<br>Nodes: Entities"
+        },
+        'Damages': {
+            'query': "MATCH p=()-[:DAMAGES]->() RETURN p LIMIT 25;",
+            'description': "Edges: Damages Relationship<br>Nodes: Entities"
+        },
+        'Effected-By': {
+            'query': "MATCH p=()-[:AFFECTED_BY]->() RETURN p LIMIT 25;",
+            'description': "Edges: Effected By Relationship<br>Nodes: Entities"
+        },
+        'Impact': {
+            'query': "MATCH p=()-[:IMPACTS]->() RETURN p LIMIT 25;",
+            'description': "Edges: Impacts Relationship<br>Nodes: Entities"
+        },
+        'Applies-To': {
+            'query': "MATCH p=()-[:APPLIES_TO]->() RETURN p LIMIT 25;",
+            'description': "Edges: Applies to Relationship<br>Nodes: Entities"
+        },
+        'Funds': {
+            'query': "MATCH p=()-[:FUNDS]->() RETURN p LIMIT 25;",
+            'description': "Edges: Funds Relationship<br>Nodes: Entities"
+        },
+        'Contributes': {
+            'query': "MATCH p=()-[:CONTRIBUTES_TO]->() RETURN p LIMIT 25;",
+            'description': "Edges: Contributes Relationship<br>Nodes: Entities"
+        },
+        'Developed': {
+            'query': "MATCH p=()-[:DEVELOPED]->() RETURN p LIMIT 25;",
+            'description': "Edges: Developed Relationship<br>Nodes: Entities"
+        },
+        'Governing': {
+            'query': "MATCH p=()-[:GOVERNING]->() RETURN p LIMIT 25;",
+            'description': "Edges: Governing Relationship<br>Nodes: Entities"
+        },
+        'Specifies': {
+            'query': "MATCH p=()-[:SPECIFIES]->() RETURN p LIMIT 25;",
+            'description': "Edges: Specifies Relationship<br>Nodes: Entities"
+        },
+        'Promotes': {
+            'query': "MATCH p=()-[:PROMOTES]->() RETURN p LIMIT 25;",
+            'description': "Edges: Promotes Relationship<br>Nodes: Entities"
+        }
+    }
 
-    # Define different Cypher queries based on the dropdown selection
-    if relation_option == 'Effects':
-        query = "MATCH p=()-[:AFFECTS]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Effect Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'CAUSES':
-        query = "MATCH p=()-[:CAUSES]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Causes Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Integrates':
-        query = "MATCH p=()-[:INTEGRATES]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Integrates Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Damages':
-        query = "MATCH p=()-[:DAMAGES]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Damages Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Effected-By':
-        query = "MATCH p=()-[:AFFECTED_BY]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Effected By Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Impact':
-        query = "MATCH p=()-[:IMPACTS]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Impacts Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Applies-To':
-        query = "MATCH p=()-[:APPLIES_TO]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Applies to Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Funds':
-        query = "MATCH p=()-[:FUNDS]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Funds Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Contributes':
-        query = "MATCH p=()-[:CONTRIBUTES_TO]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Contributes Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Developed':
-        query = "MATCH p=()-[:DEVELOPED]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Developed Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Governing':
-        query = "MATCH p=()-[:GOVERNING]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Governing Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Specifies':
-        query = "MATCH p=()-[:SPECIFIES]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Specifies Relationship<br>Nodes: Entities", unsafe_allow_html=True)
-    elif relation_option == 'Promotes':
-        query = "MATCH p=()-[:PROMOTES]->() RETURN p LIMIT 25;"
-        st.markdown("Edges: Promotes Relationship<br>Nodes: Entities", unsafe_allow_html=True)
+    if relation_option in relation_queries:
+        query_info = relation_queries[relation_option]
+        query = query_info['query']
+        st.markdown(query_info['description'], unsafe_allow_html=True)
+
 
     # Run the selected query
     neo4j_paths = run_cypher_query(query, driver)
