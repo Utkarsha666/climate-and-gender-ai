@@ -10,10 +10,10 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 
 1. AI-Driven Report Generation and Policy Recommendations 
 Utilize AI agents to process real-time climate and gender-related data, generating comprehensive reports. These reports will provide data-driven insights and policy recommendations that address both challenges simultaneously.
-![alt text](image-6.png)
 
 2. Climate-Resilient Infrastructure Development
 Apply AI to analyze environmental trends like temperature changes and precipitation. This data will guide the development of climate-resilient infrastructure, focusing on predicting and mitigating flood risks to protect vulnerable communities and ensure equitable access to essential resources.
+![alt text](image-6.png)
 
 3. Risk Assessment and Early Warning Systems
 Develop a predictive models using climate data to identify regions at heightened risk for disasters such as floods, droughts, and landslide. These models will inform early warning systems.
