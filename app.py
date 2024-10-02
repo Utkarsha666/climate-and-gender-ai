@@ -63,7 +63,8 @@ def load_climate_change_indicator():
     climate_driven_inform_risk_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/15_Climate-driven_INFORM_Risk.csv')
     fossil_fuel_subsidies_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/09_Fossil_Fuel_Subsidies.csv')
     environmental_protection_expenditures_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/08_Environmental_Protection_Expenditures.csv')
-    return climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df
+    forest_and_carbon_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/13_Forest_and_Carbon.csv')
+    return climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df, forest_and_carbon_df
 
 def get_climate_data(nasa_url):
 
@@ -86,7 +87,6 @@ def get_climate_data(nasa_url):
         return climate_change_df
 
 def forecast_temperature_and_precipitation(df):
-    
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date', inplace=True)
 
@@ -105,14 +105,12 @@ def forecast_temperature_and_precipitation(df):
     X, y_temp = create_features(df, label='Temperature')
     _, y_precip = create_features(df, label='Precipitation')
 
-    # Load the saved models
     model_temp = xgb.XGBRegressor()
     model_temp.load_model('models/model_temp.json')
 
     model_precip = xgb.XGBRegressor()
     model_precip.load_model('models/model_precip.json')
 
-    # Forecast for the next 6 months
     future_dates = pd.date_range(start=df.index[-1], periods=180, freq='D')
     future_df = pd.DataFrame(index=future_dates)
     future_X = create_features(future_df)
@@ -120,7 +118,6 @@ def forecast_temperature_and_precipitation(df):
     future_temp = model_temp.predict(future_X)
     future_precip = model_precip.predict(future_X)
 
-    # Create a DataFrame for the forecast
     forecast_df = pd.DataFrame({
         'Date': future_dates,
         'Forecasted_Temperature': future_temp,
@@ -128,26 +125,16 @@ def forecast_temperature_and_precipitation(df):
     })
     forecast_df.set_index('Date', inplace=True)
 
-    # Set the Seaborn theme
     sns.set_theme(style="dark")
-
-    # Plot the forecast
     fig, ax = plt.subplots(figsize=(14, 7))
-
-    # Plot the actual data
     sns.lineplot(data=df, x=df.index, y='Temperature', label='Actual Temperature', ax=ax)
     sns.lineplot(data=df, x=df.index, y='Precipitation', label='Actual Precipitation', ax=ax)
-
-    # Plot the forecasted data
     sns.lineplot(data=forecast_df, x=forecast_df.index, y='Forecasted_Temperature', label='Forecasted Temperature', linestyle='--', ax=ax)
     sns.lineplot(data=forecast_df, x=forecast_df.index, y='Forecasted_Precipitation', label='Forecasted Precipitation', linestyle='--', ax=ax)
-
     ax.set_xlabel('Date')
     ax.set_ylabel('Values')
     ax.set_title('Temperature and Precipitation Forecast for 6 Months')
-    ax.legend()
-    ax.grid(True)
-
+    ax.legend(loc='upper left')  # Set legend location to top left corner
     st.pyplot(fig)
 
 
@@ -181,16 +168,21 @@ def forecast_gii(nepal_data):
         'ds': pd.to_datetime(nepal_data.index, format='%Y'),  
         'y': nepal_data.values  
     })
-    gii_model.fit(nepal_data_prophet)
-    future = gii_model.make_future_dataframe(periods=15, freq="AS")  
-    future['ds'] = pd.to_datetime(future['ds'].dt.year, format='%Y') 
-    forecast = gii_model.predict(future)
-    plt.figure(figsize=(12, 6))
-    plt.plot(nepal_data.index, nepal_data.values, label="Actual")  
-    plt.plot(forecast["ds"].dt.year, forecast["yhat"], label="Forecast")  
+
+    # Create and fit the model
+    model = Prophet()
+    model.fit(nepal_data_prophet)
+
+    future = model.make_future_dataframe(periods=8, freq="AS")  
+    forecast = model.predict(future)
+
+    # Plot 
+    plt.figure(figsize=(8, 4))
+    sns.lineplot(x=nepal_data_prophet['ds'], y=nepal_data_prophet['y'], label="Actual", marker='o')
+    sns.lineplot(x=forecast["ds"], y=forecast["yhat"], label="Forecast", linestyle='--')
     plt.fill_between(
-        forecast["ds"].dt.year, forecast["yhat_lower"], forecast["yhat_upper"], alpha=0.2, label="Confidence Interval"
-    )  
+        forecast["ds"], forecast["yhat_lower"], forecast["yhat_upper"], alpha=0.2, label="Confidence Interval"
+    )
     plt.xlabel("Year")
     plt.ylabel("Gender Inequality Index")
     plt.title("Gender Inequality Index of Nepal Forecast")
@@ -343,12 +335,13 @@ def question(user_input):
 ##################################################################################################################################
 
 nepal_data_grouped = load_and_prepare_gii(gii_url)
-(climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df) = load_climate_change_indicator()
+(climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df, forest_and_carbon_df) = load_climate_change_indicator()
 cci_df_dataframes = {
     'Climate Related Disasters': climate_related_disaster_df,
     'Climate Driven Inform Risk': climate_driven_inform_risk_df,
     'Fossil Fuel Subsidies': fossil_fuel_subsidies_df,
-    'Environmental Protection Expenditures': environmental_protection_expenditures_df
+    'Environmental Protection Expenditures': environmental_protection_expenditures_df,
+    'Forest and Carbon': forest_and_carbon_df
 }
 
 # Set the sidebar title
