@@ -58,6 +58,13 @@ def load_and_prepare_gii(gii_url):
     gii_data = pd.read_csv(gii_url)
     return gii_data
 
+def load_climate_change_indicator():
+    climate_related_disaster_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/14_Climate-related_Disasters_Frequency.csv')
+    climate_driven_inform_risk_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/15_Climate-driven_INFORM_Risk.csv')
+    fossil_fuel_subsidies_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/09_Fossil_Fuel_Subsidies.csv')
+    environmental_protection_expenditures_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/08_Environmental_Protection_Expenditures.csv')
+    return climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df
+
 def get_climate_data(nasa_url):
 
     response = requests.get(nasa_url)
@@ -212,6 +219,50 @@ def plot_model_prediction(df, column_name, title):
     # Display the plot in Streamlit
     st.pyplot(fig)
 
+def plot_climate_change_indicator(df, title, ylabel):
+    # Extract unique indicators
+    indicators = df['Indicator'].unique()
+
+    # Set dark background theme for seaborn
+    sns.set_theme(style="darkgrid")
+
+    # Create a new figure for plotting
+    plt.figure(figsize=(12, 6))
+
+    # Loop through each indicator and plot its time series
+    for i, indicator in enumerate(indicators):
+        # Select data for the current indicator
+        indicator_data = df[df['Indicator'] == indicator]
+
+        # Determine the correct column range based on the selected dataframe
+        if title == 'Climate Related Disasters':
+            years = [int(col) for col in indicator_data.columns[5:]]  # Skip the first 5 columns
+            values = indicator_data.iloc[0, 5:].to_numpy()  # Select the first row and skip first 5 columns
+        else:
+            years = [int(col) for col in indicator_data.columns[9:]]  # Skip the first 9 columns
+            values = indicator_data.iloc[0, 9:].to_numpy()  # Select the first row and skip first 9 columns
+
+        # Plot the time series with a line plot
+        sns.lineplot(x=years, y=values, label=indicator)
+
+    # Add labels and title
+    plt.xlabel('Year')
+    plt.ylabel(ylabel)
+    plt.title(title)
+
+    # Add legend and place it outside the plot
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    # Rotate x-axis labels for better readability
+    plt.xticks(rotation=45)
+
+    # Show the plot
+    plt.grid(True)
+    plt.tight_layout()
+
+    # Display the plot in Streamlit
+    st.pyplot(plt)
+
 ##################################################################################################################
 
 def connect_mongoDB():
@@ -292,6 +343,13 @@ def question(user_input):
 ##################################################################################################################################
 
 nepal_data_grouped = load_and_prepare_gii(gii_url)
+(climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df) = load_climate_change_indicator()
+cci_df_dataframes = {
+    'Climate Related Disasters': climate_related_disaster_df,
+    'Climate Driven Inform Risk': climate_driven_inform_risk_df,
+    'Fossil Fuel Subsidies': fossil_fuel_subsidies_df,
+    'Environmental Protection Expenditures': environmental_protection_expenditures_df
+}
 
 # Set the sidebar title
 st.sidebar.title("Climate and Gender AI")
@@ -302,6 +360,10 @@ relation_option = st.sidebar.selectbox(
     'Select relation to visualize entities:',
     ('Impact','Effects', 'Contributes', 'CAUSES', 'Promotes', 'Effected-By', 'Applies-To', 'Funds', 'Developed', 'Damages', 'Governing', 'Specifies', 'Promotes')
 )
+
+climate_change_indicator_option = st.sidebar.selectbox('Climate Change Indicator Nepal', list(cci_df_dataframes.keys()))
+cci_df = cci_df_dataframes[climate_change_indicator_option]
+
 
 # Create a dropdown menu in the sidebar
 digital_gender_gap_option = st.sidebar.selectbox(
@@ -440,7 +502,11 @@ if __name__ == '__main__':
         elif digital_gender_gap_option == 'Mobile GSMA':
             plot_model_prediction(df_digital_gender_gap, 'ground_truth_mobile_gg', 'Mobile GSMA')
 
+ ################################################################################################################################
 
 
+    # Climate-Change Indicators
+    st.write("Climate-Change Indicator")
+    plot_climate_change_indicator(cci_df, climate_change_indicator_option, 'Value')
 
 
