@@ -13,27 +13,27 @@ Utilize AI agents to process real-time climate and gender-related data, generati
 
 2. Climate-Resilient Infrastructure Development
 Apply AI to analyze environmental trends like temperature changes and precipitation. This data will guide the development of climate-resilient infrastructure, focusing on predicting and mitigating flood risks to protect vulnerable communities and ensure equitable access to essential resources.
-![alt text](image-6.png)
+![alt text](screenshot/image-6.png)
 
 3. Risk Assessment and Early Warning Systems
 Develop a predictive models using climate data to identify regions at heightened risk for disasters such as floods, droughts, and landslide. These models will inform early warning systems.
 
 
 # Screenshot
-![alt text](image-1.png)
+![alt text](screenshot/image-1.png)
 
 # chat feature
-![alt text](image-2.png)
+![alt text](screenshot/image-2.png)
 
 # Explain Graph Features
 user can click on Explain Graph, which will explain the relation of graph in natural language
-![alt text](image-4.png)
+![alt text](screenshot/image-4.png)
 
 # Climate Change Indicator 
-![alt text](image-7.png)
+![alt text](screenshot/image-7.png)
 
 # Gender Inequality Index
-![alt text](image-3.png)
+![alt text](screenshot/image-3.png)
 
 # Methodology
 - Data Collection
