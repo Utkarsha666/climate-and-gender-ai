@@ -1,12 +1,10 @@
 import streamlit as st
 import networkx as nx
-import matplotlib.pyplot as plt
 from neo4j import GraphDatabase
 import numpy as np
 import os
 from dotenv import load_dotenv
 import pandas as pd
-import seaborn as sns
 import requests
 from pymongo import MongoClient
 from langchain.vectorstores import MongoDBAtlasVectorSearch
@@ -23,6 +21,9 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from prophet import Prophet
+import altair as alt
+import plotly.graph_objects as go
+import plotly.express as px
 
 # Load environment variables from .env file
 load_dotenv()
@@ -111,7 +112,7 @@ def forecast_temperature_and_precipitation(df):
     model_precip = xgb.XGBRegressor()
     model_precip.load_model('models/model_precip.json')
 
-    future_dates = pd.date_range(start=df.index[-1], periods=180, freq='D')
+    future_dates = pd.date_range(start=df.index[-1], periods=10, freq='D')  # Forecast for 10 days
     future_df = pd.DataFrame(index=future_dates)
     future_X = create_features(future_df)
 
@@ -125,17 +126,28 @@ def forecast_temperature_and_precipitation(df):
     })
     forecast_df.set_index('Date', inplace=True)
 
-    sns.set_theme(style="dark")
-    fig, ax = plt.subplots(figsize=(14, 7))
-    sns.lineplot(data=df, x=df.index, y='Temperature', label='Actual Temperature', ax=ax)
-    sns.lineplot(data=df, x=df.index, y='Precipitation', label='Actual Precipitation', ax=ax)
-    sns.lineplot(data=forecast_df, x=forecast_df.index, y='Forecasted_Temperature', label='Forecasted Temperature', linestyle='--', ax=ax)
-    sns.lineplot(data=forecast_df, x=forecast_df.index, y='Forecasted_Precipitation', label='Forecasted Precipitation', linestyle='--', ax=ax)
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Values')
-    ax.set_title('Temperature and Precipitation Forecast for 6 Months')
-    ax.legend(loc='upper left')  # Set legend location to top left corner
-    st.pyplot(fig)
+    # Prepare data for Streamlit line chart
+    forecast_df.reset_index(inplace=True)
+    forecast_df = forecast_df.melt('Date', var_name='Type', value_name='Value')
+
+    # Plot using Streamlit's line_chart
+    st.line_chart(forecast_df.pivot(index='Date', columns='Type', values='Value'))
+
+    temp_chart = alt.Chart(forecast_df[forecast_df['Type'] == 'Forecasted_Temperature']).mark_line().encode(
+        x='Date:T',
+        y='Value:Q',
+        color=alt.value('blue'),
+        tooltip=['Date:T', 'Value:Q']
+    ).properties(title='Forecasted Temperature')
+
+    precip_chart = alt.Chart(forecast_df[forecast_df['Type'] == 'Forecasted_Precipitation']).mark_line().encode(
+        x='Date:T',
+        y='Value:Q',
+        color=alt.value('green'),
+        tooltip=['Date:T', 'Value:Q']
+    ).properties(title='Forecasted Precipitation')
+
+    st.altair_chart(temp_chart | precip_chart, use_container_width=True)
 
 
 def run_cypher_query(query, driver):
@@ -155,9 +167,61 @@ def neo4j_to_networkx(neo4j_paths):
     return G
 
 def plot_graph(G):
-    plt.figure(figsize=(8, 6))
-    nx.draw(G, with_labels=True, node_color="lightblue", edge_color="gray", node_size=500, font_size=10)
-    st.pyplot(plt)  
+    pos = nx.spring_layout(G, seed=42)
+    edge_x = []
+    edge_y = []
+    for edge in G.edges():
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.append(x0)
+        edge_x.append(x1)
+        edge_x.append(None)
+        edge_y.append(y0)
+        edge_y.append(y1)
+        edge_y.append(None)
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y,
+        line=dict(width=0.5, color='#888'),
+        hoverinfo='none',
+        mode='lines')
+
+    node_x = []
+    node_y = []
+    node_text = []
+    for node in G.nodes():
+        x, y = pos[node]
+        node_x.append(x)
+        node_y.append(y)
+        node_text.append(str(node))  # Add node name
+
+    node_trace = go.Scatter(
+        x=node_x, y=node_y,
+        mode='markers+text',
+        text=node_text,  # Display node names
+        textposition="middle center",  # Position text within the node
+        hoverinfo='text',
+        marker=dict(
+            showscale=True,
+            colorscale='YlGnBu',
+            size=20,  # Node size
+            colorbar=dict(
+                thickness=15,
+                title='Node Connections',
+                xanchor='left',
+                titleside='right'
+            ),
+            line_width=2))
+
+    fig = go.Figure(data=[edge_trace, node_trace],
+                    layout=go.Layout(
+                        showlegend=False,
+                        hovermode='closest',
+                        margin=dict(b=0, l=0, r=0, t=0),
+                        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),  
+                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)))  
+
+    st.plotly_chart(fig)
 
 
 def forecast_gii(nepal_data):
@@ -176,53 +240,61 @@ def forecast_gii(nepal_data):
     future = model.make_future_dataframe(periods=8, freq="AS")  
     forecast = model.predict(future)
 
-    # Plot 
-    plt.figure(figsize=(8, 4))
-    sns.lineplot(x=nepal_data_prophet['ds'], y=nepal_data_prophet['y'], label="Actual", marker='o')
-    sns.lineplot(x=forecast["ds"], y=forecast["yhat"], label="Forecast", linestyle='--')
-    plt.fill_between(
-        forecast["ds"], forecast["yhat_lower"], forecast["yhat_upper"], alpha=0.2, label="Confidence Interval"
+    # Combine actual and forecast data for plotting
+    actual_data = nepal_data_prophet.copy()
+    actual_data['type'] = 'Actual'
+    forecast_data = forecast[['ds', 'yhat']].copy()
+    forecast_data.rename(columns={'yhat': 'y'}, inplace=True)
+    forecast_data['type'] = 'Forecast'
+
+    combined_data = pd.concat([actual_data, forecast_data])
+
+    # Plot using Altair for better control over colors and line styles
+    actual_chart = alt.Chart(combined_data[combined_data['type'] == 'Actual']).mark_line(color='blue').encode(
+        x='ds:T',
+        y='y:Q',
+        tooltip=['ds:T', 'y:Q']
+    ).properties(title='Gender Inequality Index of Nepal Forecast')
+
+    forecast_chart = alt.Chart(combined_data[combined_data['type'] == 'Forecast']).mark_line(color='red', strokeDash=[5, 5]).encode(
+        x='ds:T',
+        y='y:Q',
+        tooltip=['ds:T', 'y:Q']
     )
-    plt.xlabel("Year")
-    plt.ylabel("Gender Inequality Index")
-    plt.title("Gender Inequality Index of Nepal Forecast")
-    plt.legend()
-    st.pyplot(plt)
+
+    st.altair_chart(actual_chart + forecast_chart, use_container_width=True)
     
 def plot_model_prediction(df, column_name, title):
     """
-    Function to plot a line chart using Seaborn for the given column in the DataFrame
-    in a Streamlit app.
+    Function to plot a line chart using Streamlit for the given column in the DataFrame.
 
     Parameters:
     - df: DataFrame containing the data
     - column_name: The column to be plotted
     - title: The title of the plot
     """
-    fig, ax = plt.subplots(figsize=(8, 4))
-    
-    # Seaborn lineplot
-    sns.lineplot(data=df, x=df.index, y=column_name, ax=ax)
-    
-    # Set plot title and remove top and right spines
-    ax.set_title(title)
-    ax.spines[['top', 'right']].set_visible(False)
-    
-    # Display the plot in Streamlit
-    st.pyplot(fig)
+    # Prepare data for Streamlit line chart
+    chart_data = df[[column_name]].reset_index()
+
+    # Plot using Altair for better control over the title
+    chart = alt.Chart(chart_data.rename(columns={'index': 'Date'})).mark_line().encode(
+        x='Date:T',
+        y=column_name
+    ).properties(
+        title=title
+    )
+
+    st.altair_chart(chart, use_container_width=True)
 
 def plot_climate_change_indicator(df, title, ylabel):
     # Extract unique indicators
     indicators = df['Indicator'].unique()
 
-    # Set dark background theme for seaborn
-    sns.set_theme(style="darkgrid")
+    # Create a new DataFrame for plotting
+    plot_data = pd.DataFrame()
 
-    # Create a new figure for plotting
-    plt.figure(figsize=(12, 6))
-
-    # Loop through each indicator and plot its time series
-    for i, indicator in enumerate(indicators):
+    # Loop through each indicator and prepare data for plotting
+    for indicator in indicators:
         # Select data for the current indicator
         indicator_data = df[df['Indicator'] == indicator]
 
@@ -234,26 +306,32 @@ def plot_climate_change_indicator(df, title, ylabel):
             years = [int(col) for col in indicator_data.columns[9:]]  # Skip the first 9 columns
             values = indicator_data.iloc[0, 9:].to_numpy()  # Select the first row and skip first 9 columns
 
-        # Plot the time series with a line plot
-        sns.lineplot(x=years, y=values, label=indicator)
+        # Append data to plot_data DataFrame
+        temp_df = pd.DataFrame({
+            'Year': years,
+            'Value': values,
+            'Indicator': indicator
+        })
+        plot_data = pd.concat([plot_data, temp_df])
 
-    # Add labels and title
-    plt.xlabel('Year')
-    plt.ylabel(ylabel)
-    plt.title(title)
+    # Create an interactive line plot using Plotly
+    fig = px.line(plot_data, x='Year', y='Value', color='Indicator', title=title, labels={'Value': ylabel})
 
-    # Add legend and place it outside the plot
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-
-    # Rotate x-axis labels for better readability
-    plt.xticks(rotation=45)
-
-    # Show the plot
-    plt.grid(True)
-    plt.tight_layout()
+    # Update layout for better readability
+    fig.update_layout(
+        xaxis_title='Year',
+        yaxis_title=ylabel,
+        legend_title='Indicator',
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=1.05
+        )
+    )
 
     # Display the plot in Streamlit
-    st.pyplot(plt)
+    st.plotly_chart(fig)
 
 ##################################################################################################################
 
@@ -376,7 +454,7 @@ if submit_button:
 #########################################################################################################################
 
 if __name__ == '__main__':
-    st.title("Gender and Climate Change")
+    st.header("Gender and Climate Change")
 
     st.subheader("Relationship visualizer")
     relation_queries = {
@@ -471,11 +549,12 @@ if __name__ == '__main__':
         response = llm_groq.invoke(messages)
         st.sidebar.write(response.content)
     ############################################################################################################################
+    st.write("10 Days Temperature and Percipitation Forecast")
     forecast_temperature_and_precipitation(climate_change_df)
 
     col1, col2 = st.columns([1, 1])  
     with col1:
-        st.write("Gender Inequality Index Forecast Nepal")
+        #st.write("Gender Inequality Index Forecast Nepal")
         forecast_gii(nepal_data_grouped)
     
     with col2:

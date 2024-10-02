@@ -8,16 +8,15 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 
 # Objectives
 
-- Policy Effectiveness: Evaluate the effectiveness of policies aimed at mitigating climate change and promoting gender equality.
+1. AI-Driven Report Generation and Policy Recommendations 
+Utilize AI agents to process real-time climate and gender-related data, generating comprehensive reports. These reports will provide data-driven insights and policy recommendations that address both challenges simultaneously.
+![alt text](image-6.png)
 
-- Report Generation and Policy Recommendations: Utilize AI agents to analyze real-time climate data from NASA and gender-related datasets. These agents will generate comprehensive reports and actionable policy recommendations. By synthesizing this data, the AI can provide insights into the intersection of climate change and gender inequality, helping policymakers create targeted interventions.
+2. Climate-Resilient Infrastructure Development
+Apply AI to analyze environmental trends like temperature changes and precipitation. This data will guide the development of climate-resilient infrastructure, focusing on predicting and mitigating flood risks to protect vulnerable communities and ensure equitable access to essential resources.
 
-- Climate-Resilient Infrastructure Development: Based on the trends of the features, infrastructure improvements (e.g., flood-resistant housing, drought-resistant agriculture) could focus on reducing the disproportionate burden by improving access to critical resources.
-
-- Resource Allocation and Disaster Relief: Understanding the local climate dynamics (temperature, precipitation, wind) helps allocate resources to vulnerable populations, with specific attention to the needs of marginalized communities (e.g. distribution of aid post-disaster).
-
-- Risk Assessment and Early Warning Systems: These climate features can be used to develop predictive models that highlight areas at higher risk for disasters such as floods, droughts, and heatwaves. Policy measures can be directed to these regions to ensure disaster preparedness plans.
-
+3. Risk Assessment and Early Warning Systems
+Develop a predictive models using climate data to identify regions at heightened risk for disasters such as floods, droughts, and landslide. These models will inform early warning systems.
 
 
 # Screenshot
@@ -31,7 +30,10 @@ user can click on Explain Graph, which will explain the relation of graph in nat
 ![alt text](image-4.png)
 
 # Climate Change Indicator 
-![alt text](image-5.png)
+![alt text](image-7.png)
+
+# Gender Inequality Index
+![alt text](image-3.png)
 
 # Methodology
 - Data Collection
