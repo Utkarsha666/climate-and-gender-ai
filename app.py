@@ -42,6 +42,8 @@ nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=2020010
 gii_url = "https://data.humdata.org/dataset/5a1ea18e-9177-4e37-b91f-5631961bdb6c/resource/4539296c-289c-48a2-b0dc-3fc8dcad1b77/download/gii_gender_inequality_index_value.csv"
 gii_model = Prophet()
 
+ggr_df = 'datasets/WEF-GGR.xlsx'
+
 args = {
   "iso2code": "NP"
   }
@@ -66,6 +68,44 @@ def load_climate_change_indicator():
     environmental_protection_expenditures_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/08_Environmental_Protection_Expenditures.csv')
     forest_and_carbon_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/13_Forest_and_Carbon.csv')
     return climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df, forest_and_carbon_df
+
+def plot_ggr(df):
+    data = pd.read_excel(df)
+    nepal_data = data[data['Economy Name'] == 'Nepal']
+    nepal_data.set_index('Indicator', inplace=True)
+    nepal_data = nepal_data.transpose()
+    nepal_data = nepal_data.drop(['Economy ISO3', 'Economy Name', 'Indicator ID', 'Attribute 1', 'Attribute 2', 'Attribute 3', 'Partner'], errors='ignore')
+    nepal_data.index = pd.to_datetime(nepal_data.index, errors='coerce').dropna()
+    
+    # Handle duplicate indicator names
+    indicators = nepal_data.columns.tolist()
+    indicators = pd.Series(indicators).duplicated().cumsum().astype(str).radd(indicators).tolist()
+    nepal_data.columns = indicators
+
+    # Select the first two indicators by default
+    default_indicators = indicators[:2] if len(indicators) >= 2 else indicators
+
+    selected_indicators = st.multiselect('Select Indicators', indicators, default=default_indicators)
+
+    if selected_indicators:
+        filtered_data = nepal_data[selected_indicators].reset_index()
+        filtered_data = filtered_data.melt(id_vars='index', var_name='Indicator', value_name='Value')
+        filtered_data.rename(columns={'index': 'Year'}, inplace=True)
+
+        # Resolve conflicting values by averaging
+        filtered_data = filtered_data.groupby(['Year', 'Indicator']).mean().reset_index()
+
+        fig = px.line(filtered_data, x='Year', y='Value', color='Indicator', title='Gender Gap Report for Nepal')
+
+        fig.update_layout(
+            xaxis_title='Year',
+            yaxis_title='Value',
+            width=1000,  # Adjust the width as needed
+            showlegend=False,
+            margin=dict(l=20, r=20, t=30, b=20)
+        )
+
+        st.plotly_chart(fig)
 
 def get_climate_data(nasa_url):
 
@@ -296,18 +336,21 @@ def plot_climate_change_indicator(df, title, ylabel):
         })
         plot_data = pd.concat([plot_data, temp_df])
 
-    fig = px.line(plot_data, x='Year', y='Value', color='Indicator', title=title, labels={'Value': ylabel})
+    # Select the first four indicators by default
+    default_indicators = indicators[:4] if len(indicators) >= 4 else indicators
+
+    selected_indicators = st.multiselect('Select Indicators', indicators, default=default_indicators)
+
+    filtered_data = plot_data[plot_data['Indicator'].isin(selected_indicators)]
+
+    fig = px.line(filtered_data, x='Year', y='Value', color='Indicator', title=title, labels={'Value': ylabel})
 
     fig.update_layout(
         xaxis_title='Year',
         yaxis_title=ylabel,
-        legend_title='Indicator',
-        legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=1.05
-        )
+        width=1000,  # Adjust the width as needed
+        showlegend=False,
+        margin=dict(l=20, r=20, t=30, b=20)
     )
 
     st.plotly_chart(fig)
@@ -431,8 +474,6 @@ if submit_button:
 #########################################################################################################################
 
 if __name__ == '__main__':
-    st.header("Gender and Climate Change")
-
     st.subheader("Relationship visualizer")
     relation_queries = {
         'Effects': {
@@ -557,5 +598,7 @@ if __name__ == '__main__':
     # Climate-Change Indicators
     st.write("Climate-Change Indicator")
     plot_climate_change_indicator(cci_df, climate_change_indicator_option, 'Value')
+    st.write("Gender Gap Report")
+    plot_ggr(ggr_df)
 
 
