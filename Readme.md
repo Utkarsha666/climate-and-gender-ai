@@ -8,22 +8,19 @@ This project proposes a data-driven approach using a combination of Knowledge Gr
 
 # Objectives
 
-1. AI-Driven Report Generation and Policy Recommendations 
+1. AI-Driven Report Generation and Policy Recommendations:
 Utilize AI agents to process real-time climate and gender-related data, generating comprehensive reports. These reports will provide data-driven insights and policy recommendations that address both challenges simultaneously.
 
-2. Climate-Resilient Infrastructure Development
+2. Climate-Resilient Infrastructure Development:
 Apply AI to analyze environmental trends like temperature changes and precipitation. This data will guide the development of climate-resilient infrastructure, focusing on predicting and mitigating flood risks to protect vulnerable communities and ensure equitable access to essential resources.
 ![alt text](screenshot/image-6.png)
 
-3. Risk Assessment and Early Warning Systems
+3. Risk Assessment and Early Warning Systems:
 Develop a predictive models using climate data to identify regions at heightened risk for disasters such as floods, droughts, and landslide. These models will inform early warning systems.
 
 
-# Screenshot
-![alt text](screenshot/image-1.png)
-
 # chat feature
-![alt text](screenshot/image-2.png)
+![alt text](screenshot/Image.png)
 
 # Explain Graph Features
 user can click on Explain Graph, which will explain the relation of graph in natural language
@@ -44,6 +41,14 @@ user can click on Explain Graph, which will explain the relation of graph in nat
 # Ethical Considerations
 - Bias and Fairness: Ensure that machine learning models are not biased against marginalized gender groups. 
 - Data Privacy: Safeguard the privacy of individuals and communities when collecting and processing gender-disaggregated data.
+
+# Carbon Emission From AI Technology
+Raising awareness and addressing the carbon emissions of AI technologies like Stable Diffusion and Large Language Models (LLMs) is crucial. Here are some steps:
+1. Optimize Cloud Usage: Choose cloud providers that prioritize renewable energy and have robust sustainability practices. Providers like Google Cloud and Microsoft Azure offer carbon-neutral options.
+
+2. Adopt Green AI Practices: Implement energy-efficient algorithms and optimize model architectures to reduce energy consumption. Tools like LLMCarbon can help estimate and manage the carbon footprint of AI models.
+
+3. Efficient Model Training: Use techniques such as model pruning, QLoRA(Fine-Tuning LLM), and knowledge distillation to reduce the computational load and energy consumption during training.
 
 
 # License

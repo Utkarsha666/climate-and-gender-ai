@@ -91,7 +91,6 @@ def forecast_temperature_and_precipitation(df):
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date', inplace=True)
 
-    # Prepare the data for XGBoost
     def create_features(df, label=None):
         df['month'] = df.index.month
         df['dayofyear'] = df.index.dayofyear
@@ -112,7 +111,7 @@ def forecast_temperature_and_precipitation(df):
     model_precip = xgb.XGBRegressor()
     model_precip.load_model('models/model_precip.json')
 
-    future_dates = pd.date_range(start=df.index[-1], periods=10, freq='D')  # Forecast for 10 days
+    future_dates = pd.date_range(start=df.index[-1], periods=10, freq='D')  
     future_df = pd.DataFrame(index=future_dates)
     future_X = create_features(future_df)
 
@@ -126,11 +125,9 @@ def forecast_temperature_and_precipitation(df):
     })
     forecast_df.set_index('Date', inplace=True)
 
-    # Prepare data for Streamlit line chart
     forecast_df.reset_index(inplace=True)
     forecast_df = forecast_df.melt('Date', var_name='Type', value_name='Value')
 
-    # Plot using Streamlit's line_chart
     st.line_chart(forecast_df.pivot(index='Date', columns='Type', values='Value'))
 
     temp_chart = alt.Chart(forecast_df[forecast_df['Type'] == 'Forecasted_Temperature']).mark_line().encode(
@@ -193,18 +190,18 @@ def plot_graph(G):
         x, y = pos[node]
         node_x.append(x)
         node_y.append(y)
-        node_text.append(str(node))  # Add node name
+        node_text.append(str(node))  
 
     node_trace = go.Scatter(
         x=node_x, y=node_y,
         mode='markers+text',
-        text=node_text,  # Display node names
-        textposition="middle center",  # Position text within the node
+        text=node_text,  
+        textposition="middle center",  
         hoverinfo='text',
         marker=dict(
             showscale=True,
             colorscale='YlGnBu',
-            size=20,  # Node size
+            size=20,  
             colorbar=dict(
                 thickness=15,
                 title='Node Connections',
@@ -233,14 +230,12 @@ def forecast_gii(nepal_data):
         'y': nepal_data.values  
     })
 
-    # Create and fit the model
     model = Prophet()
     model.fit(nepal_data_prophet)
 
     future = model.make_future_dataframe(periods=8, freq="AS")  
     forecast = model.predict(future)
 
-    # Combine actual and forecast data for plotting
     actual_data = nepal_data_prophet.copy()
     actual_data['type'] = 'Actual'
     forecast_data = forecast[['ds', 'yhat']].copy()
@@ -248,8 +243,6 @@ def forecast_gii(nepal_data):
     forecast_data['type'] = 'Forecast'
 
     combined_data = pd.concat([actual_data, forecast_data])
-
-    # Plot using Altair for better control over colors and line styles
     actual_chart = alt.Chart(combined_data[combined_data['type'] == 'Actual']).mark_line(color='blue').encode(
         x='ds:T',
         y='y:Q',
@@ -273,10 +266,7 @@ def plot_model_prediction(df, column_name, title):
     - column_name: The column to be plotted
     - title: The title of the plot
     """
-    # Prepare data for Streamlit line chart
     chart_data = df[[column_name]].reset_index()
-
-    # Plot using Altair for better control over the title
     chart = alt.Chart(chart_data.rename(columns={'index': 'Date'})).mark_line().encode(
         x='Date:T',
         y=column_name
@@ -287,26 +277,18 @@ def plot_model_prediction(df, column_name, title):
     st.altair_chart(chart, use_container_width=True)
 
 def plot_climate_change_indicator(df, title, ylabel):
-    # Extract unique indicators
     indicators = df['Indicator'].unique()
-
-    # Create a new DataFrame for plotting
     plot_data = pd.DataFrame()
 
-    # Loop through each indicator and prepare data for plotting
     for indicator in indicators:
-        # Select data for the current indicator
         indicator_data = df[df['Indicator'] == indicator]
-
-        # Determine the correct column range based on the selected dataframe
         if title == 'Climate Related Disasters':
-            years = [int(col) for col in indicator_data.columns[5:]]  # Skip the first 5 columns
-            values = indicator_data.iloc[0, 5:].to_numpy()  # Select the first row and skip first 5 columns
+            years = [int(col) for col in indicator_data.columns[5:]]  
+            values = indicator_data.iloc[0, 5:].to_numpy()  
         else:
-            years = [int(col) for col in indicator_data.columns[9:]]  # Skip the first 9 columns
-            values = indicator_data.iloc[0, 9:].to_numpy()  # Select the first row and skip first 9 columns
+            years = [int(col) for col in indicator_data.columns[9:]]  
+            values = indicator_data.iloc[0, 9:].to_numpy()  
 
-        # Append data to plot_data DataFrame
         temp_df = pd.DataFrame({
             'Year': years,
             'Value': values,
@@ -314,10 +296,8 @@ def plot_climate_change_indicator(df, title, ylabel):
         })
         plot_data = pd.concat([plot_data, temp_df])
 
-    # Create an interactive line plot using Plotly
     fig = px.line(plot_data, x='Year', y='Value', color='Indicator', title=title, labels={'Value': ylabel})
 
-    # Update layout for better readability
     fig.update_layout(
         xaxis_title='Year',
         yaxis_title=ylabel,
@@ -330,7 +310,6 @@ def plot_climate_change_indicator(df, title, ylabel):
         )
     )
 
-    # Display the plot in Streamlit
     st.plotly_chart(fig)
 
 ##################################################################################################################
@@ -349,13 +328,11 @@ def connect_mongoDB():
     return collection
 
 def get_vector_retriever(collection):
-    # Define the Atlas Vector Search Index name
     ATLAS_VECTOR_SEARCH_INDEX_NAME = 'vector_index'
     embedding_model = GoogleGenerativeAIEmbeddings(model='models/embedding-001')
 
-    # Define your vector search engine using MongoDB Atlas
     vector_search = MongoDBAtlasVectorSearch.from_documents(
-        documents=[],  # no need to pass documents here if they are already in MongoDB
+        documents=[],  
         embedding=embedding_model,
         collection=collection,
         index_name=ATLAS_VECTOR_SEARCH_INDEX_NAME
