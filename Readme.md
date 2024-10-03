@@ -20,7 +20,7 @@ Develop a predictive models using climate data to identify regions at heightened
 
 
 # chat feature
-![alt text](screenshot/Image.png)
+![alt text](screenshot/image.png)
 
 # Explain Graph Features
 user can click on Explain Graph, which will explain the relation of graph in natural language
