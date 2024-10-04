@@ -69,6 +69,33 @@ def load_climate_change_indicator():
     forest_and_carbon_df = pd.read_csv('datasets/CSV/Nepal_NP_All_Indicators/13_Forest_and_Carbon.csv')
     return climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df, forest_and_carbon_df
 
+def load_gender_statistics():
+    df = pd.read_excel("datasets/P_Data_Extract_From_Gender_Statistics.xlsx")
+    df = df.drop(columns=['Series Code', 'Country Name', 'Country Code'])
+    df = df.groupby('Series Name').apply(lambda x: x.sort_values(by='Series Name')).reset_index(drop=True)
+    return df
+
+def plot_gender_statistics(df):
+    data_long = pd.melt(df, id_vars=['Series Name'], var_name='Year', value_name='Value')
+    data_long['Year'] = data_long['Year'].str.extract('(\d{4})').astype(int)
+    data_long['Value'] = pd.to_numeric(data_long['Value'], errors='coerce')
+    data_long = data_long.dropna(subset=['Value'])
+    series_names = data_long['Series Name'].unique()
+    selected_series = st.multiselect('Select Series Names', series_names, default=series_names[:2])
+
+    if selected_series:
+        filtered_data = data_long[data_long['Series Name'].isin(selected_series)]
+        fig = px.line(filtered_data, x='Year', y='Value', color='Series Name', title='Gender Statistics')
+
+        fig.update_layout(
+            xaxis_title='Year',
+            yaxis_title='Value',
+            width=1200,  
+            margin=dict(l=20, r=20, t=30, b=20)
+        )
+
+        st.plotly_chart(fig)
+
 def plot_ggr(df):
     data = pd.read_excel(df)
     nepal_data = data[data['Economy Name'] == 'Nepal']
@@ -433,6 +460,7 @@ def question(user_input):
 ##################################################################################################################################
 
 nepal_data_grouped = load_and_prepare_gii(gii_url)
+gender_statistics_data = load_gender_statistics()
 (climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df, forest_and_carbon_df) = load_climate_change_indicator()
 cci_df_dataframes = {
     'Climate Related Disasters': climate_related_disaster_df,
@@ -600,5 +628,7 @@ if __name__ == '__main__':
     plot_climate_change_indicator(cci_df, climate_change_indicator_option, 'Value')
     st.write("Gender Gap Report")
     plot_ggr(ggr_df)
+    st.write("Gender Statistics")
+    plot_gender_statistics(gender_statistics_data)
 
 
