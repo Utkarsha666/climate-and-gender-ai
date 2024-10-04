@@ -25,23 +25,22 @@ import altair as alt
 import plotly.graph_objects as go
 import plotly.express as px
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Access the variables
 NEO4J_URI = os.getenv("NEO4J_URI")
 NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 groq_api_key = os.getenv("GROQ_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-
+# Nasa Temperature and Percipiration 
 nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20240928&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
 
 # Load the Gender Inequality Index (GII) data
 gii_url = "https://data.humdata.org/dataset/5a1ea18e-9177-4e37-b91f-5631961bdb6c/resource/4539296c-289c-48a2-b0dc-3fc8dcad1b77/download/gii_gender_inequality_index_value.csv"
 gii_model = Prophet()
 
+# gender gap ratio 
 ggr_df = 'datasets/WEF-GGR.xlsx'
 
 args = {
@@ -57,6 +56,19 @@ df_digital_gender_gap.index = pd.to_datetime(df_digital_gender_gap.index, format
 llm_groq = ChatGroq(groq_api_key=groq_api_key,model_name="Gemma-7b-It")
 #######################################################################################################################
 
+def load_and_prepare_ggr(ggr_df):
+    data = pd.read_excel(ggr_df)
+    nepal_data = data[data['Economy Name'] == 'Nepal']
+    nepal_data.set_index('Indicator', inplace=True)
+    nepal_data = nepal_data.transpose()
+    nepal_data = nepal_data.drop(['Economy ISO3', 'Economy Name', 'Indicator ID', 'Attribute 1', 'Attribute 2', 'Attribute 3', 'Partner'], errors='ignore')
+    nepal_data.index = pd.to_datetime(nepal_data.index, errors='coerce').dropna()
+    indicators = nepal_data.columns.tolist()
+    indicators = pd.Series(indicators).duplicated().cumsum().astype(str).radd(indicators).tolist()
+    nepal_data.columns = indicators
+    default_indicators = indicators[:2] if len(indicators) >= 2 else indicators
+    return nepal_data, indicators, default_indicators
+
 def load_and_prepare_gii(gii_url):
     gii_data = pd.read_csv(gii_url)
     return gii_data
@@ -70,19 +82,18 @@ def load_climate_change_indicator():
     return climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df, forest_and_carbon_df
 
 def load_gender_statistics():
+    # Load Gender Statistics ( Source : World Bank )
     df = pd.read_excel("datasets/P_Data_Extract_From_Gender_Statistics.xlsx")
     df = df.drop(columns=['Series Code', 'Country Name', 'Country Code'])
     df = df.groupby('Series Name').apply(lambda x: x.sort_values(by='Series Name')).reset_index(drop=True)
-    return df
-
-def plot_gender_statistics(df):
     data_long = pd.melt(df, id_vars=['Series Name'], var_name='Year', value_name='Value')
     data_long['Year'] = data_long['Year'].str.extract('(\d{4})').astype(int)
     data_long['Value'] = pd.to_numeric(data_long['Value'], errors='coerce')
     data_long = data_long.dropna(subset=['Value'])
     series_names = data_long['Series Name'].unique()
-    selected_series = st.multiselect('Select Series Names', series_names, default=series_names[:2])
+    return data_long, series_names
 
+def plot_gender_statistics(data_long, selected_series):
     if selected_series:
         filtered_data = data_long[data_long['Series Name'].isin(selected_series)]
         fig = px.line(filtered_data, x='Year', y='Value', color='Series Name', title='Gender Statistics')
@@ -91,35 +102,18 @@ def plot_gender_statistics(df):
             xaxis_title='Year',
             yaxis_title='Value',
             width=1200,  
+            showlegend=False,
             margin=dict(l=20, r=20, t=30, b=20)
         )
 
         st.plotly_chart(fig)
 
-def plot_ggr(df):
-    data = pd.read_excel(df)
-    nepal_data = data[data['Economy Name'] == 'Nepal']
-    nepal_data.set_index('Indicator', inplace=True)
-    nepal_data = nepal_data.transpose()
-    nepal_data = nepal_data.drop(['Economy ISO3', 'Economy Name', 'Indicator ID', 'Attribute 1', 'Attribute 2', 'Attribute 3', 'Partner'], errors='ignore')
-    nepal_data.index = pd.to_datetime(nepal_data.index, errors='coerce').dropna()
-    
-    # Handle duplicate indicator names
-    indicators = nepal_data.columns.tolist()
-    indicators = pd.Series(indicators).duplicated().cumsum().astype(str).radd(indicators).tolist()
-    nepal_data.columns = indicators
-
-    # Select the first two indicators by default
-    default_indicators = indicators[:2] if len(indicators) >= 2 else indicators
-
-    selected_indicators = st.multiselect('Select Indicators', indicators, default=default_indicators)
-
+def plot_ggr(nepal_data, selected_indicators):
     if selected_indicators:
         filtered_data = nepal_data[selected_indicators].reset_index()
         filtered_data = filtered_data.melt(id_vars='index', var_name='Indicator', value_name='Value')
         filtered_data.rename(columns={'index': 'Year'}, inplace=True)
 
-        # Resolve conflicting values by averaging
         filtered_data = filtered_data.groupby(['Year', 'Indicator']).mean().reset_index()
 
         fig = px.line(filtered_data, x='Year', y='Value', color='Indicator', title='Gender Gap Report for Nepal')
@@ -127,7 +121,7 @@ def plot_ggr(df):
         fig.update_layout(
             xaxis_title='Year',
             yaxis_title='Value',
-            width=1000,  # Adjust the width as needed
+            width=1000,  
             showlegend=False,
             margin=dict(l=20, r=20, t=30, b=20)
         )
@@ -458,9 +452,8 @@ def question(user_input):
 ##################################################################################################################################
 ##################################################################################################################################
 ##################################################################################################################################
-
 nepal_data_grouped = load_and_prepare_gii(gii_url)
-gender_statistics_data = load_gender_statistics()
+gender_statistics_data, series_names = load_gender_statistics()
 (climate_related_disaster_df, climate_driven_inform_risk_df, fossil_fuel_subsidies_df, environmental_protection_expenditures_df, forest_and_carbon_df) = load_climate_change_indicator()
 cci_df_dataframes = {
     'Climate Related Disasters': climate_related_disaster_df,
@@ -483,18 +476,17 @@ relation_option = st.sidebar.selectbox(
 climate_change_indicator_option = st.sidebar.selectbox('Climate Change Indicator Nepal', list(cci_df_dataframes.keys()))
 cci_df = cci_df_dataframes[climate_change_indicator_option]
 
-
-# Create a dropdown menu in the sidebar
-digital_gender_gap_option = st.sidebar.selectbox(
-    'Select digital gender gap',
-    ('Internet Online','Internet Offline', 'Internet Both', 'Mobile Online', 'Mobile Offline', 'Mobile Both', 'Mobile GSMA')
-)
-
 climate_change_df = get_climate_data(nasa_url)
+
+ggr_data, ggr_indicator, ggr_default_indicator = load_and_prepare_ggr(ggr_df)
+selected_ggr_indicators = st.sidebar.multiselect('Select Gender Gap Indicators', ggr_indicator, default=ggr_default_indicator)
+
+#Gender statistics
+selected_gender_statistics_indicator = st.sidebar.multiselect('Select Gender Statistics', series_names, default=series_names[:2])
+
+
 user_input = st.sidebar.text_area("Ask question to Bot: Climate Change and Gender (Reports, Policies, assesment etc Nepal)")
 submit_button = st.sidebar.button("ASK ME")
-
-# Display the submitted text
 if submit_button:
     answer = question(user_input)
     st.sidebar.write(answer)
@@ -605,6 +597,11 @@ if __name__ == '__main__':
     
     with col2:
         st.write("Digital Gender Gap")
+        # Create a dropdown menu in the sidebar
+        digital_gender_gap_option = st.selectbox(
+            'Select digital gender gap',
+            ('Internet Online','Internet Offline', 'Internet Both', 'Mobile Online', 'Mobile Offline', 'Mobile Both', 'Mobile GSMA')
+        )
         if digital_gender_gap_option == 'Internet Online':
             plot_model_prediction(df_digital_gender_gap, 'internet_online_model_prediction', 'Internet Online')
         elif digital_gender_gap_option == 'Internet Offline':
@@ -627,8 +624,8 @@ if __name__ == '__main__':
     st.write("Climate-Change Indicator")
     plot_climate_change_indicator(cci_df, climate_change_indicator_option, 'Value')
     st.write("Gender Gap Report")
-    plot_ggr(ggr_df)
+    plot_ggr(ggr_data, selected_ggr_indicators)
     st.write("Gender Statistics")
-    plot_gender_statistics(gender_statistics_data)
+    plot_gender_statistics(gender_statistics_data, selected_gender_statistics_indicator)
 
 
