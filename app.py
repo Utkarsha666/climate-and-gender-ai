@@ -621,7 +621,7 @@ if __name__ == '__main__':
 
 
     # Climate-Change Indicators
-    st.write("Climate-Change Indicator")
+    st.write("Climate-Change Indicator Nepal")
     plot_climate_change_indicator(cci_df, climate_change_indicator_option, 'Value')
     st.write("Gender Gap Report Nepal")
     plot_ggr(ggr_data, selected_ggr_indicators)
