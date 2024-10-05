@@ -364,7 +364,7 @@ def plot_climate_change_indicator(df, title, ylabel):
     fig.update_layout(
         xaxis_title='Year',
         yaxis_title=ylabel,
-        width=1000,  # Adjust the width as needed
+        width=1000,  
         showlegend=False,
         margin=dict(l=20, r=20, t=30, b=20)
     )
