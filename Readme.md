@@ -24,10 +24,10 @@ Develop a predictive models using climate data to identify regions at heightened
 
 # Explain Graph Features
 user can click on Explain Graph, which will explain the relation of graph in natural language
-![alt text](screenshot/image-4.png)
+![alt text](image.png)
 
 # Climate Change Indicator 
-![alt text](screenshot/image-7.png)
+![alt text](image.png)
 
 # Gender Inequality Index
 ![alt text](screenshot/image-3.png)

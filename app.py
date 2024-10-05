@@ -24,6 +24,7 @@ from prophet import Prophet
 import altair as alt
 import plotly.graph_objects as go
 import plotly.express as px
+import joblib
 
 load_dotenv()
 
@@ -152,33 +153,30 @@ def forecast_temperature_and_precipitation(df):
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date', inplace=True)
 
-    def create_features(df, label=None):
+    # Function to create features
+    def create_features(df):
         df['month'] = df.index.month
         df['dayofyear'] = df.index.dayofyear
         df['dayofmonth'] = df.index.day
         df['dayofweek'] = df.index.dayofweek
-        X = df[['month', 'dayofyear', 'dayofmonth', 'dayofweek']]
-        if label:
-            y = df[label]
-            return X, y
-        return X
+        return df[['month', 'dayofyear', 'dayofmonth', 'dayofweek']]
 
-    X, y_temp = create_features(df, label='Temperature')
-    _, y_precip = create_features(df, label='Precipitation')
+    # Load the models
+    model_temp = joblib.load('models/xgboost_temp_model.pkl')
+    model_precip = joblib.load('models/xgboost_precip_model.pkl')
 
-    model_temp = xgb.XGBRegressor()
-    model_temp.load_model('models/model_temp.json')
-
-    model_precip = xgb.XGBRegressor()
-    model_precip.load_model('models/model_precip.json')
-
-    future_dates = pd.date_range(start=df.index[-1], periods=10, freq='D')  
+    # Generate future dates
+    future_dates = pd.date_range(start=df.index[-1] + pd.Timedelta(days=1), periods=10, freq='D')
     future_df = pd.DataFrame(index=future_dates)
+
+    # Create features for future dates
     future_X = create_features(future_df)
 
+    # Predict future temperature and precipitation
     future_temp = model_temp.predict(future_X)
     future_precip = model_precip.predict(future_X)
 
+    # Create a DataFrame for the forecasts
     forecast_df = pd.DataFrame({
         'Date': future_dates,
         'Forecasted_Temperature': future_temp,
@@ -186,11 +184,14 @@ def forecast_temperature_and_precipitation(df):
     })
     forecast_df.set_index('Date', inplace=True)
 
+    # Prepare the DataFrame for visualization
     forecast_df.reset_index(inplace=True)
     forecast_df = forecast_df.melt('Date', var_name='Type', value_name='Value')
 
+    # Display line chart in Streamlit
     st.line_chart(forecast_df.pivot(index='Date', columns='Type', values='Value'))
 
+    # Altair chart for temperature
     temp_chart = alt.Chart(forecast_df[forecast_df['Type'] == 'Forecasted_Temperature']).mark_line().encode(
         x='Date:T',
         y='Value:Q',
@@ -198,6 +199,7 @@ def forecast_temperature_and_precipitation(df):
         tooltip=['Date:T', 'Value:Q']
     ).properties(title='Forecasted Temperature')
 
+    # Altair chart for precipitation
     precip_chart = alt.Chart(forecast_df[forecast_df['Type'] == 'Forecasted_Precipitation']).mark_line().encode(
         x='Date:T',
         y='Value:Q',
@@ -205,6 +207,7 @@ def forecast_temperature_and_precipitation(df):
         tooltip=['Date:T', 'Value:Q']
     ).properties(title='Forecasted Precipitation')
 
+    # Display both charts together
     st.altair_chart(temp_chart | precip_chart, use_container_width=True)
 
 
