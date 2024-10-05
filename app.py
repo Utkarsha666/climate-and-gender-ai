@@ -22,7 +22,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from prophet import Prophet
 import altair as alt
+from datetime import timedelta, date
 import plotly.graph_objects as go
+from sklearn.preprocessing import QuantileTransformer
 import plotly.express as px
 import joblib
 
@@ -35,7 +37,10 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Nasa Temperature and Percipiration 
-nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20240928&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
+nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20241004&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
+model_temp = joblib.load('models/xgboost_temp_model.pkl')
+model_precip = joblib.load('models/xgboost_precip_model.pkl')
+qt = QuantileTransformer(output_distribution='normal')
 
 # Load the Gender Inequality Index (GII) data
 gii_url = "https://data.humdata.org/dataset/5a1ea18e-9177-4e37-b91f-5631961bdb6c/resource/4539296c-289c-48a2-b0dc-3fc8dcad1b77/download/gii_gender_inequality_index_value.csv"
@@ -146,69 +151,56 @@ def get_climate_data(nasa_url):
             'Precipitation': precipitation,
             'Temperature': temperature
         })
-
+        climate_change_df['Date'] = pd.to_datetime(climate_change_df['Date'])
+        climate_change_df.set_index('Date', inplace=True)
         return climate_change_df
+    
+def forecast_temperature_and_precipitation(climate_change_df):
+    qt = QuantileTransformer(output_distribution='normal')
+    climate_change_df['Transformed_Precipitation'] = qt.fit_transform(climate_change_df[['Precipitation']])
 
-def forecast_temperature_and_precipitation(df):
-    df['Date'] = pd.to_datetime(df['Date'])
-    df.set_index('Date', inplace=True)
+    # Generate dates for the next 10 days
+    last_date = climate_change_df.index[-1]
+    future_dates = [last_date + timedelta(days=i) for i in range(1, 11)]
 
-    # Function to create features
-    def create_features(df):
-        df['month'] = df.index.month
-        df['dayofyear'] = df.index.dayofyear
-        df['dayofmonth'] = df.index.day
-        df['dayofweek'] = df.index.dayofweek
-        return df[['month', 'dayofyear', 'dayofmonth', 'dayofweek']]
-
-    # Load the models
-    model_temp = joblib.load('models/xgboost_temp_model.pkl')
-    model_precip = joblib.load('models/xgboost_precip_model.pkl')
-
-    # Generate future dates
-    future_dates = pd.date_range(start=df.index[-1] + pd.Timedelta(days=1), periods=10, freq='D')
+    # Create a DataFrame for the future dates
     future_df = pd.DataFrame(index=future_dates)
+    future_df['month'] = future_df.index.month
+    future_df['dayofyear'] = future_df.index.dayofyear
+    future_df['dayofmonth'] = future_df.index.day
+    future_df['dayofweek'] = future_df.index.dayofweek
 
-    # Create features for future dates
-    future_X = create_features(future_df)
+    # Add lag features from the last available data
+    for lag in range(1, 4):
+        future_df[f'temp_lag_{lag}'] = climate_change_df['Temperature'].shift(lag).iloc[-1]
+        future_df[f'precip_lag_{lag}'] = climate_change_df['Precipitation'].shift(lag).iloc[-1]
 
-    # Predict future temperature and precipitation
-    future_temp = model_temp.predict(future_X)
-    future_precip = model_precip.predict(future_X)
+    # Add rolling mean and other features
+    future_df['temp_roll_mean'] = climate_change_df['Temperature'].rolling(window=7).mean().iloc[-1]
+    future_df['precip_roll_mean'] = climate_change_df['Precipitation'].rolling(window=7).mean().iloc[-1]
+    future_df['precip_diff'] = climate_change_df['Precipitation'].diff().iloc[-1]
+    future_df['precip_pct_change'] = climate_change_df['Precipitation'].pct_change().iloc[-1]
 
-    # Create a DataFrame for the forecasts
-    forecast_df = pd.DataFrame({
+    # Ensure the order of columns in future_df matches the training data
+    feature_names = model_temp.get_booster().feature_names
+    future_df = future_df[feature_names]
+
+    # Predict temperature
+    future_temp_predictions = model_temp.predict(future_df)
+
+    # Predict precipitation and reverse the quantile transformation
+    future_precip_predictions = model_precip.predict(future_df)
+    future_precip_predictions = qt.inverse_transform(future_precip_predictions.reshape(-1, 1)).flatten()
+
+    # Create a DataFrame for the predictions
+    future_predictions_df = pd.DataFrame({
         'Date': future_dates,
-        'Forecasted_Temperature': future_temp,
-        'Forecasted_Precipitation': future_precip
+        'Predicted_Temperature': future_temp_predictions,
+        'Predicted_Precipitation': future_precip_predictions
     })
-    forecast_df.set_index('Date', inplace=True)
 
-    # Prepare the DataFrame for visualization
-    forecast_df.reset_index(inplace=True)
-    forecast_df = forecast_df.melt('Date', var_name='Type', value_name='Value')
-
-    # Display line chart in Streamlit
-    st.line_chart(forecast_df.pivot(index='Date', columns='Type', values='Value'))
-
-    # Altair chart for temperature
-    temp_chart = alt.Chart(forecast_df[forecast_df['Type'] == 'Forecasted_Temperature']).mark_line().encode(
-        x='Date:T',
-        y='Value:Q',
-        color=alt.value('blue'),
-        tooltip=['Date:T', 'Value:Q']
-    ).properties(title='Forecasted Temperature')
-
-    # Altair chart for precipitation
-    precip_chart = alt.Chart(forecast_df[forecast_df['Type'] == 'Forecasted_Precipitation']).mark_line().encode(
-        x='Date:T',
-        y='Value:Q',
-        color=alt.value('green'),
-        tooltip=['Date:T', 'Value:Q']
-    ).properties(title='Forecasted Precipitation')
-
-    # Display both charts together
-    st.altair_chart(temp_chart | precip_chart, use_container_width=True)
+    # Plot the predictions
+    st.line_chart(future_predictions_df.set_index('Date')[['Predicted_Temperature', 'Predicted_Precipitation']])
 
 
 def run_cypher_query(query, driver):
@@ -590,7 +582,7 @@ if __name__ == '__main__':
         response = llm_groq.invoke(messages)
         st.sidebar.write(response.content)
     ############################################################################################################################
-    st.write("10 Days Temperature and Percipitation Forecast")
+    st.write("10 Days Climate Change Prediction")
     forecast_temperature_and_precipitation(climate_change_df)
 
     col1, col2 = st.columns([1, 1])  
