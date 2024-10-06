@@ -44,7 +44,7 @@ AI agents will analyze climate data (temperature, rainfall), gender statistics (
 # Predictive Model
 Develop advanced predictive models using NASA POWER data and NASA's Earthdata, integrating AI-driven mapping to identify regions most at risk for disasters such as floods and landslides. By combining climate indicators (e.g., temperature, rainfall, forest cover, carbon emissions) with geographic and socio-economic data, these models will enable more accurate risk assessments. It will also inform early warning systems and guide targeted mitigation strategies to protect vulnerable communities.
 
-🚀 Project Highlights:
+# Project Highlights:
 - AI agents analyze critical climate data—such as temperature, rainfall, forest cover, and carbon emissions—alongside gender indicators and statistics. Additionally, they will review policy documents, assessments, reports, and publications to uncover the disproportionate impacts of climate change on marginalized communities, particularly women. The insights generated will form the basis of comprehensive reports, policy recommendations, and actionable proposals aimed at driving both gender equality and climate resilience.
 
 - A relationship visualizer to depict various relationships such as impacts, causes, and funding etc.
