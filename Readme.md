@@ -65,12 +65,12 @@ _Note: The model and token counts were minimized due to the token rate limit of 
 
 
 # Ethical Considerations
-This is crucial as our application will be in production. Comprehensive research and fine-tuning are necessary to ensure our model is not biased against social groups and gender. To enhance safety, we can deploy a BERT model to analyze harmful content as an additional safeguard. Proper evaluations will be conducted on the output of the LLM to ensure the accuracy of the generated content.
+This is crucial as our application will be in production. Comprehensive research and fine-tuning might be necessary, including the addition of more nodes in the graph that analyze the ethical side based on defined criteria or frameworks (e.g., national AI policy). It’s essential to ensure that the application is not biased toward any social groups.
 
-During fine-tuning, it is essential to address:
+During fine-tuning, it is vital to address:
 
-    - Algorithmic Bias: Mitigating any biases in the model to ensure fairness.
-    - Data Privacy: Safeguarding the privacy of individuals and communities when collecting and processing gender-disaggregated data.
+    1. Algorithmic Bias: Mitigating any biases in the model to ensure fairness.
+    2. Data Privacy: Safeguarding the privacy of individuals and communities when collecting and processing gender-disaggregated data.
 
 # License
 MIT License
