@@ -37,7 +37,7 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Nasa Temperature and Percipiration 
-nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20241004&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
+nasa_url = "https://power.larc.nasa.gov/api/projection/daily/point?start=20200101&end=20241018&latitude=27.7103&longitude=85.3222&community=ag&parameters=PRECTOTCORR%2CT2M&format=json&user=utkarsha&header=true&time-standard=utc&model=ensemble&scenario=ssp126"
 model_temp = joblib.load('models/xgboost_temp_model.pkl')
 model_precip = joblib.load('models/xgboost_precip_model.pkl')
 qt = QuantileTransformer(output_distribution='normal')
@@ -59,7 +59,11 @@ digital_gender_gap = digital_gender_gap.json()
 df_digital_gender_gap = pd.DataFrame(digital_gender_gap['data']['NP']).T
 df_digital_gender_gap.index = pd.to_datetime(df_digital_gender_gap.index, format='%Y%m')
 
+# small model for simple exlaining the graph
 llm_groq = ChatGroq(groq_api_key=groq_api_key,model_name="Gemma-7b-It")
+# used for report generation by agents
+llm_mistral = ChatGroq(temperature=0, model_name="mixtral-8x7b-32768", api_key=groq_api_key)
+
 #######################################################################################################################
 
 def load_and_prepare_ggr(ggr_df):
@@ -443,6 +447,7 @@ def question(user_input):
             
         answer = rag_chain.invoke(user_input)
         return answer
+    
     
 ##################################################################################################################################
 ##################################################################################################################################
