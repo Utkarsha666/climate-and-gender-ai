@@ -3,6 +3,7 @@ import agents.interview
 import agents.analyst
 from agents.research import research_graph_builder
 
+
 st.set_page_config(page_title="Report Generation")
 
 # User inputs
@@ -46,6 +47,7 @@ for event in graph.stream({"topic": topic,
 feedback = st.sidebar.text_input("Enter feedback for the analysts (e.g., add a specific analyst):",  value="Add in the Country Director of NGO of Nepal")
 
 if st.sidebar.button("Submit Feedback"):
+    st.sidebar.info("Generating report may fail due to token limits. If it does retry after 1 minute to resolve the issue.")
     # Update the state with user feedback
     graph.update_state(thread, {"human_analyst_feedback": feedback}, as_node="human_feedback")
 
