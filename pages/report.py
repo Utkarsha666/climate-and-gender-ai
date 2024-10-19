@@ -23,7 +23,7 @@ topics = [
     "Healthcare, Climate Change and Gender Equity Policy in Nepal"
 ]
 
-topic = st.selectbox("Choose your topic", topics)
+topic = st.sidebar.selectbox("Choose your topic", topics)
 thread = {"configurable": {"thread_id": "1"}}
 
 graph = research_graph_builder()
@@ -43,25 +43,25 @@ for event in graph.stream({"topic": topic,
             print(f"**Description:** {analyst.description}")
             print("---")
 
-feedback = st.text_input("Enter feedback for the analysts (e.g., add a specific analyst):",  value="Add in the Country Director of NGO of Nepal")
+feedback = st.sidebar.text_input("Enter feedback for the analysts (e.g., add a specific analyst):",  value="Add in the Country Director of NGO of Nepal")
 
-if st.button("Submit Feedback"):
+if st.sidebar.button("Submit Feedback"):
     # Update the state with user feedback
     graph.update_state(thread, {"human_analyst_feedback": feedback}, as_node="human_feedback")
 
     # Display a confirmation message
-    st.success("Feedback submitted successfully!")
+    st.sidebar.success("Feedback submitted successfully!")
 
     # Check
     for event in graph.stream(None, thread, stream_mode="values"):
         analysts = event.get('analysts', '')
         if analysts:
             for analyst in analysts:
-                st.write(f"**Name:** {analyst.name}")
-                st.write(f"**Affiliation:** {analyst.affiliation}")
-                st.write(f"**Role:** {analyst.role}")
-                st.write(f"**Description:** {analyst.description}")
-                st.write("---")
+                st.sidebar.write(f"**Name:** {analyst.name}")
+                st.sidebar.write(f"**Affiliation:** {analyst.affiliation}")
+                st.sidebar.write(f"**Role:** {analyst.role}")
+                st.sidebar.write(f"**Description:** {analyst.description}")
+                st.sidebar.write("---")
 
 
     # Confirm we are done
