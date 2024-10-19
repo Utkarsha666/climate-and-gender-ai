@@ -6,7 +6,7 @@ from agents.research import research_graph_builder
 st.set_page_config(page_title="Report Generation")
 
 # User inputs
-max_analysts = st.number_input("Max Number of Analysts", min_value=1, max_value=10, value=2)
+max_analysts = st.sidebar.number_input("Max Number of Analysts", min_value=1, max_value=10, value=2)
 topics = [
     "The Intersection of Climate Change and Gender Equality in Nepal",
     "Climate Changes and its Impact in Nepal",
