@@ -11,7 +11,7 @@ from langchain_groq import ChatGroq
 import operator
 from typing import  Annotated
 from langgraph.graph import MessagesState
-from analyst import Analyst
+from agents.analyst import Analyst
 from langchain_community.tools.tavily_search import TavilySearchResults
 import os
 from dotenv import load_dotenv

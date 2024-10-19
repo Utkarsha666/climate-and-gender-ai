@@ -1,7 +1,10 @@
 import streamlit as st
-import interview
-import analyst
-from research import research_graph_builder
+import agents.interview
+import agents.analyst
+from agents.research import research_graph_builder
+import sys
+
+st.set_page_config(page_title="Report Generation")
 
 # User inputs
 max_analysts = st.number_input("Max Number of Analysts", min_value=1, max_value=10, value=2)
@@ -16,8 +19,6 @@ topic = st.selectbox("Choose your topic", topics)
 thread = {"configurable": {"thread_id": "1"}}
 
 graph = research_graph_builder()
-
-# Streamlit app title
 
 # Run the graph until the first interruption
 for event in graph.stream({"topic": topic,

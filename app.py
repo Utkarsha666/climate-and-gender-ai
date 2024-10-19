@@ -28,6 +28,10 @@ from sklearn.preprocessing import QuantileTransformer
 import plotly.express as px
 import joblib
 
+st.set_page_config(
+    page_title="Dashboard",
+)
+
 load_dotenv()
 
 NEO4J_URI = os.getenv("NEO4J_URI")

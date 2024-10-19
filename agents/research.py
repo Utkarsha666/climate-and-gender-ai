@@ -1,7 +1,7 @@
 import operator
 from typing import List, Annotated
 from typing_extensions import TypedDict
-import analyst
+import agents.analyst
 from langchain_core.messages import get_buffer_string
 from PIL import Image as PILImage  
 from typing import List
@@ -15,12 +15,12 @@ from langchain_groq import ChatGroq
 import operator
 from typing import  Annotated
 from langgraph.graph import MessagesState
-from analyst import Analyst
-from analyst import create_analysts, human_feedback 
-from interview import interview_graph_builder
+from agents.analyst import Analyst
+from agents.analyst import create_analysts, human_feedback 
+from agents.interview import interview_graph_builder
 from langchain_community.tools.tavily_search import TavilySearchResults
 import os
-import interview
+import agents.interview
 from dotenv import load_dotenv
 
 load_dotenv()
