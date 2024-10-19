@@ -2,7 +2,6 @@ import streamlit as st
 import agents.interview
 import agents.analyst
 from agents.research import research_graph_builder
-import sys
 
 st.set_page_config(page_title="Report Generation")
 
@@ -13,6 +12,15 @@ topics = [
     "Climate Changes and its Impact in Nepal",
     "Climate Change Policy in Nepal",
     "Gender Equality in Nepal",
+    "Report of Climate Related Disaster in Nepal",
+    "Gender Based Agriculture in Nepal",
+    "Women Effected by Climate Change in Nepal",
+    "Climate Related Disaster Assesment in Nepal",
+    "Climate Related Disaster Prone Areas of Nepal",
+    "Effects of Climate Change in Nepal",
+    "Early Warning System in Nepal",
+    "Greenhouse Gas Emmision in Nepal",
+    "Healthcare, Climate Change and Gender Equity Policy in Nepal"
 ]
 
 topic = st.selectbox("Choose your topic", topics)
