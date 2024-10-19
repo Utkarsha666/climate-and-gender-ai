@@ -14,11 +14,14 @@ from langgraph.graph import MessagesState
 from analyst import Analyst
 from langchain_community.tools.tavily_search import TavilySearchResults
 import os
+from dotenv import load_dotenv
 
-os.environ['TAVILY_API_KEY'] = "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"
+load_dotenv()
 
-llm=ChatGroq(temperature=0.2, model_name="mixtral-8x7b-32768",
-             api_key='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')
+TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+llm=ChatGroq(temperature=0.2, model_name="mixtral-8x7b-32768", api_key=GROQ_API_KEY)
 
 tavily_search = TavilySearchResults(max_results=2)
 

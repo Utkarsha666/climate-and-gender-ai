@@ -6,9 +6,15 @@ from langgraph.graph import START, END, StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
+import os
+from dotenv import load_dotenv
 
-llm=ChatGroq(temperature=0.2, model_name="mixtral-8x7b-32768",
-             api_key='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')
+
+load_dotenv()
+TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+llm=ChatGroq(temperature=0.2, model_name="mixtral-8x7b-32768", api_key=GROQ_API_KEY)
 
 # Define the Analyst model
 class Analyst(BaseModel):
