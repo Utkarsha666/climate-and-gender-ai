@@ -25,7 +25,7 @@ Develop predictive models using climate data and NASA’s Earthdata with AI-driv
 ![alt text](screenshot/image.png)
 
 # Maps
-![alt text](image.png)
+![alt text](screenshot/image-4.png)
 
 # Climate Change Indicator
 ![alt text](screenshot/image-1.png)
