@@ -24,9 +24,8 @@ Develop predictive models using climate data and NASA’s Earthdata with AI-driv
 # chat feature
 ![alt text](screenshot/image.png)
 
-# Explain Graph Features
-user can click on Explain Graph, which will explain the relation of graph in natural language
-![alt text](screenshot/image-4.png)
+# Maps
+![alt text](image.png)
 
 # Climate Change Indicator
 ![alt text](screenshot/image-1.png)

@@ -65,8 +65,6 @@ df_digital_gender_gap.index = pd.to_datetime(df_digital_gender_gap.index, format
 
 # small model for simple exlaining the graph
 llm_groq = ChatGroq(groq_api_key=groq_api_key,model_name="Gemma-7b-It")
-# used for report generation by agents
-llm_mistral = ChatGroq(temperature=0, model_name="mixtral-8x7b-32768", api_key=groq_api_key)
 
 #######################################################################################################################
 
