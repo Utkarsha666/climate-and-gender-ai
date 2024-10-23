@@ -4,10 +4,8 @@ from streamlit_folium import st_folium
 import json
 import time
 
-# Set the path to your GeoJSON file
 geojson_path = 'datasets/CSV/map/mesaugat-geoJSON-Nepal-37f73c5/mesaugat-geoJSON-Nepal-37f73c5/hotosm_npl_waterways_polygons_geojson.geojson'
 
-# Streamlit app title
 st.title("Waterways Map")
 
 # Loading spinner

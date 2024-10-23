@@ -28,7 +28,6 @@ thread = {"configurable": {"thread_id": "1"}}
 
 graph = research_graph_builder()
 
-# Run the graph until the first interruption
 for event in graph.stream({"topic": topic,
                         "max_analysts": max_analysts},
                         thread,
@@ -47,13 +46,8 @@ feedback = st.sidebar.text_input("Enter feedback for the analysts (e.g., add a s
 
 if st.sidebar.button("Submit Feedback"):
     st.sidebar.info("Generating report may fail due to token limits. If it does retry after 1 minute to resolve the issue.")
-    # Update the state with user feedback
     graph.update_state(thread, {"human_analyst_feedback": feedback}, as_node="human_feedback")
-
-    # Display a confirmation message
     st.sidebar.success("Feedback submitted successfully!")
-
-    # Check
     for event in graph.stream(None, thread, stream_mode="values"):
         analysts = event.get('analysts', '')
         if analysts:
@@ -63,20 +57,13 @@ if st.sidebar.button("Submit Feedback"):
                 st.sidebar.write(f"**Role:** {analyst.role}")
                 st.sidebar.write(f"**Description:** {analyst.description}")
                 st.sidebar.write("---")
-
-
-    # Confirm we are done
     graph.update_state(thread, {"human_analyst_feedback":
                                 None}, as_node="human_feedback")
-
-    # Continue updates
     with st.spinner("researching and generating report..."):
         for event in graph.stream(None, thread, stream_mode="updates"):
             st.write("--Node--")
             node_name = next(iter(event.keys()))
             st.write(node_name)
-
-    # Final report
     final_state = graph.get_state(thread)
     report = final_state.values.get('final_report')
     st.subheader("Final Report")
