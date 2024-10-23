@@ -15,7 +15,7 @@ topics = [
     "Report of Climate Related Disaster in Nepal",
     "Gender Based Agriculture in Nepal",
     "Women Effected by Climate Change in Nepal",
-    "Climate Related Disaster Assesment in Nepal",
+    "Climate Related Disaster in Nepal (Flood, Lanslide)",
     "Climate Related Disaster Prone Areas of Nepal",
     "Effects of Climate Change in Nepal",
     "Early Warning System in Nepal",
